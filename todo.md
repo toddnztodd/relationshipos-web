@@ -170,3 +170,12 @@
 - [x] Referred-by field in Edit Contact form
 - [x] Referrals tab on People page with filter chips
 - [x] Tests for referral features
+
+## PWA + Install Experience (March 2026)
+- [x] Generate PWA icons (192x192, 512x512, maskable 512x512)
+- [x] Create public/manifest.json
+- [x] Add PWA meta tags to index.html
+- [x] Create public/sw.js service worker
+- [x] Register service worker in main.tsx
+- [x] Add splash/loading screen to index.html
+- [x] Tests for PWA infrastructure
