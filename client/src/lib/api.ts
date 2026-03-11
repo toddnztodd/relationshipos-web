@@ -302,3 +302,63 @@ export async function getCommunityEntity(id: number | string): Promise<Community
 export async function createCommunityEntity(data: CommunityEntityCreate): Promise<CommunityEntity> {
   return apiFetch('/community-entities/', { method: 'POST', body: JSON.stringify(data) });
 }
+
+// ── Territories ──
+export async function getTerritories(): Promise<any[]> {
+  return apiFetch('/territories');
+}
+
+export async function getTerritory(id: string): Promise<any> {
+  return apiFetch(`/territories/${id}`);
+}
+
+export async function createTerritory(data: any): Promise<any> {
+  return apiFetch('/territories', { method: 'POST', body: JSON.stringify(data) });
+}
+
+export async function updateTerritory(id: string, data: any): Promise<any> {
+  return apiFetch(`/territories/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+}
+
+export async function deleteTerritory(id: string): Promise<void> {
+  await apiFetch(`/territories/${id}`, { method: 'DELETE' });
+}
+
+export async function linkPropertyToTerritory(territoryId: string, propertyId: string): Promise<any> {
+  return apiFetch(`/territories/${territoryId}/properties`, {
+    method: 'POST',
+    body: JSON.stringify({ property_id: propertyId }),
+  });
+}
+
+export async function unlinkPropertyFromTerritory(territoryId: string, propertyId: string): Promise<void> {
+  await apiFetch(`/territories/${territoryId}/properties/${propertyId}`, { method: 'DELETE' });
+}
+
+export async function getTerritoryCoverage(id: string): Promise<any> {
+  return apiFetch(`/territories/${id}/coverage`);
+}
+
+export async function getTerritorySignals(id: string): Promise<any[]> {
+  return apiFetch(`/territories/${id}/signals`);
+}
+
+export async function logCoverageActivity(data: any): Promise<any> {
+  return apiFetch('/coverage-activities', { method: 'POST', body: JSON.stringify(data) });
+}
+
+export async function getTerritoryFarmingPrograms(id: string): Promise<any[]> {
+  return apiFetch(`/territories/${id}/farming-programs`);
+}
+
+export async function createFarmingProgram(data: any): Promise<any> {
+  return apiFetch('/farming-programs', { method: 'POST', body: JSON.stringify(data) });
+}
+
+export async function updateFarmingProgram(id: string, data: any): Promise<any> {
+  return apiFetch(`/farming-programs/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+}
+
+export async function deleteFarmingProgram(id: string): Promise<void> {
+  await apiFetch(`/farming-programs/${id}`, { method: 'DELETE' });
+}

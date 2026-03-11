@@ -126,3 +126,14 @@
 - [x] Fix 6: Daily Briefing empty state message instead of hiding section
 - [x] Fix 7: Sellability option 5 (Very High) in Add/Edit Property forms
 - [x] Fix 8: Community add UI (Add Community button and form)
+
+## Territory Intelligence Phase 1 (March 2026)
+- [x] Territory types added to types/index.ts
+- [x] Territory API functions added to lib/api.ts
+- [x] Territory hooks (useTerritories)
+- [x] Territory List view with cards, stats, coverage bar
+- [x] Territory Detail view with 4 tabs (Overview, Properties, Coverage, Programs)
+- [x] Territory creation modal with canvas boundary drawing
+- [x] Sidebar nav item for Territory
+- [x] Property detail integration (territory chips)
+- [x] Tests for territory features

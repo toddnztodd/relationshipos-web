@@ -7,6 +7,7 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
+  Flag,
 } from 'lucide-react';
 import { useLocation } from 'wouter';
 
@@ -14,6 +15,7 @@ const NAV_ITEMS = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
   { icon: Users, label: 'People', path: '/people' },
   { icon: Building2, label: 'Properties', path: '/properties' },
+  { icon: Flag, label: 'Territory', path: '/territory' },
   { icon: Globe, label: 'Community', path: '/community' },
   { icon: Settings, label: 'Settings', path: '/settings' },
 ];

@@ -12,6 +12,7 @@ import People from "./pages/People";
 import PersonDetail from "./pages/PersonDetail";
 import Properties from "./pages/Properties";
 import Community from "./pages/Community";
+import Territory from "./pages/Territory";
 import Settings from "./pages/Settings";
 import Login from "./pages/Login";
 
@@ -23,6 +24,7 @@ function AuthenticatedApp() {
         <Route path="/people" component={People} />
         <Route path="/people/:id" component={PersonDetail} />
         <Route path="/properties" component={Properties} />
+        <Route path="/territory" component={Territory} />
         <Route path="/community" component={Community} />
         <Route path="/settings" component={Settings} />
         <Route path="/404" component={NotFound} />

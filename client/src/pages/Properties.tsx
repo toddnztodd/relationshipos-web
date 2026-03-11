@@ -1,12 +1,13 @@
 import { useState, useMemo } from 'react';
 import { useProperties, usePropertyBuyerInterest, usePropertyOwners, useAddBuyerInterest, useUpdateBuyerInterest, useDeleteBuyerInterest, useLinkOwner, useUnlinkOwner } from '@/hooks/useProperties';
+import { useTerritories } from '@/hooks/useTerritories';
 import { usePeople } from '@/hooks/usePeople';
 import { personDisplayName } from '@/types';
 import { usePropertySignals } from '@/hooks/useSignals';
 import { SignalCard } from '@/components/shared/SignalCard';
 import { ConfidenceBar } from '@/components/shared/ConfidenceBar';
 import type { Property } from '@/types';
-import { Search, Home, Loader2, ArrowLeft, MapPin, Bed, Bath, DollarSign, Tag, Users, Plus, X, ChevronDown, ChevronRight, Pencil } from 'lucide-react';
+import { Search, Home, Loader2, ArrowLeft, MapPin, Bed, Bath, DollarSign, Tag, Users, Plus, X, ChevronDown, ChevronRight, Pencil, Flag } from 'lucide-react';
 import { useCreateProperty } from '@/hooks/useProperties';
 import { VoiceRecorder } from '@/components/shared/VoiceRecorder';
 import { ListingChecklist } from '@/components/properties/ListingChecklist';
@@ -526,6 +527,9 @@ function PropertyDetailPanel({ property, onBack, onEdit }: { property: Property;
           )}
         </div>
 
+        {/* Territories */}
+        <TerritoryChips propertyId={property.id} />
+
         {/* Listing Checklist */}
         <ListingChecklist propertyId={property.id} propertyAddress={property.address} />
 
@@ -881,6 +885,47 @@ function AddPropertyForm({ onClose, onCreated }: { onClose: () => void; onCreate
           Add Property
         </button>
       </form>
+    </div>
+  );
+}
+
+// ── Territory Chips ──
+const TERRITORY_TYPE_STYLES: Record<string, { label: string; color: string; bg: string }> = {
+  core_territory: { label: 'Core Territory', color: 'text-emerald-700', bg: 'bg-emerald-50' },
+  expansion_zone: { label: 'Expansion Zone', color: 'text-amber-700', bg: 'bg-amber-50' },
+  tactical_route: { label: 'Route', color: 'text-blue-700', bg: 'bg-blue-50' },
+};
+
+function TerritoryChips({ propertyId }: { propertyId: number }) {
+  const { data: territories = [] } = useTerritories();
+
+  // Filter territories that contain this property
+  const linked = territories.filter((t: any) =>
+    t.properties?.some((p: any) => String(p.id || p.property_id) === String(propertyId))
+  );
+
+  if (linked.length === 0) return null;
+
+  return (
+    <div className="relate-card p-4">
+      <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+        <Flag className="w-3 h-3" />
+        Territories
+      </h3>
+      <div className="flex flex-wrap gap-1.5">
+        {linked.map((t: any) => {
+          const cfg = TERRITORY_TYPE_STYLES[t.type] || TERRITORY_TYPE_STYLES.core_territory;
+          return (
+            <span
+              key={t.id}
+              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${cfg.color} ${cfg.bg}`}
+            >
+              <Flag className="w-2.5 h-2.5" />
+              {t.name}
+            </span>
+          );
+        })}
+      </div>
     </div>
   );
 }

@@ -17,6 +17,7 @@ export function AppShell({ children }: AppShellProps) {
   const voiceMode = useMemo(() => {
     if (location.startsWith('/people')) return 'contact' as const;
     if (location.startsWith('/properties')) return 'property' as const;
+    // Territory and other pages use quick note mode
     return 'note' as const;
   }, [location]);
 

@@ -367,3 +367,67 @@ export interface Checklist {
   created_at: string;
   updated_at: string;
 }
+
+// ── Territory ──
+export type TerritoryType = 'core_territory' | 'expansion_zone' | 'tactical_route';
+
+export interface Territory {
+  id: string;
+  name: string;
+  type: TerritoryType;
+  notes?: string;
+  boundary_data?: any;
+  map_image_url?: string;
+  created_at: string;
+  // computed stats
+  property_count: number;
+  owners_known: number;
+  relationships_known: number;
+  recent_sales: number;
+  recent_listings: number;
+  signal_count: number;
+}
+
+export interface TerritoryCreate {
+  name: string;
+  type: TerritoryType;
+  notes?: string;
+  boundary_data?: any;
+  map_image_url?: string;
+}
+
+export interface CoverageActivity {
+  id: string;
+  territory_id?: string;
+  property_id?: string;
+  person_id?: string;
+  activity_type: 'territory_intro' | 'flyer_drop' | 'magnet_drop' | 'door_knock' | 'welcome_touch' | 'market_update';
+  notes?: string;
+  completed_at: string;
+}
+
+export interface FarmingProgram {
+  id: string;
+  territory_id: string;
+  title: string;
+  recurrence: string;
+  next_due_date?: string;
+  last_completed_date?: string;
+  notes?: string;
+}
+
+export interface CoverageSummary {
+  total_properties: number;
+  properties_introduced: number;
+  properties_with_relationship: number;
+  properties_untouched: number;
+  recent_activities: CoverageActivity[];
+}
+
+export interface TerritoryProperty {
+  id: number;
+  address: string;
+  suburb: string | null;
+  sellability_score: number | null;
+  last_listing_result?: string | null;
+}
