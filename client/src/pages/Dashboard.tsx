@@ -1,12 +1,13 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useBriefing, useDashboard, useNextBestContacts } from '@/hooks/useBriefing';
+import { getFollowUpTasks, updateFollowUpTask } from '@/lib/api';
 import { useSignals } from '@/hooks/useSignals';
 import { SignalCard } from '@/components/shared/SignalCard';
 import { HealthBadge } from '@/components/shared/HealthBadge';
 import { personDisplayName } from '@/types';
 import { detectSignals } from '@/lib/signals-api';
 import { useQueryClient } from '@tanstack/react-query';
-import { Loader2, RefreshCw, Phone, TrendingUp, Users, Home, Zap, AlertTriangle, BarChart3 } from 'lucide-react';
+import { Loader2, RefreshCw, Phone, TrendingUp, Users, Home, Zap, AlertTriangle, BarChart3, ClipboardList, Check } from 'lucide-react';
 import { Link } from 'wouter';
 
 export default function Dashboard() {
@@ -180,6 +181,9 @@ export default function Dashboard() {
             </div>
           )}
 
+          {/* Follow-up Tasks */}
+          <FollowUpTasksSection />
+
           {/* Briefing Contacts */}
           <div className="relate-card p-4">
             <h2 className="text-sm font-semibold text-gray-900 mb-3">Today's Briefing</h2>
@@ -237,6 +241,81 @@ function StatCard({ icon: Icon, label, value, iconColor, iconBg }: {
         <span className="text-xs text-gray-500">{label}</span>
       </div>
       <p className="text-xl font-semibold text-gray-900">{value}</p>
+    </div>
+  );
+}
+
+function FollowUpTasksSection() {
+  const [tasks, setTasks] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [completing, setCompleting] = useState<string | null>(null);
+
+  useEffect(() => {
+    getFollowUpTasks()
+      .then((data) => setTasks(Array.isArray(data) ? data : []))
+      .catch(() => setTasks([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  async function handleComplete(id: string) {
+    setCompleting(id);
+    try {
+      await updateFollowUpTask(id, { is_completed: true });
+      setTasks((prev) => prev.filter((t) => t.id !== id));
+    } catch { /* silent */ }
+    setCompleting(null);
+  }
+
+  const incompleteTasks = tasks.filter((t) => !t.is_completed);
+
+  if (loading) return null;
+  if (incompleteTasks.length === 0) return null;
+
+  function isOverdue(d: string | undefined | null): boolean {
+    if (!d) return false;
+    return new Date(d) < new Date();
+  }
+
+  return (
+    <div className="relate-card p-4">
+      <div className="flex items-center gap-2 mb-3">
+        <ClipboardList className="w-4 h-4" style={{ color: '#6FAF8F' }} />
+        <h2 className="text-sm font-semibold text-gray-900">Follow-up Tasks</h2>
+        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">
+          {incompleteTasks.length}
+        </span>
+      </div>
+      <div className="space-y-1">
+        {incompleteTasks.map((task) => (
+          <div key={task.id} className="flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-gray-50 transition-colors">
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-gray-900 truncate">{task.title}</p>
+              <div className="flex items-center gap-2 mt-0.5">
+                {task.description && (
+                  <p className="text-xs text-gray-500 truncate">{task.description}</p>
+                )}
+                {task.due_date && (
+                  <span className={`text-[10px] font-medium ${isOverdue(task.due_date) ? 'text-amber-600' : 'text-gray-400'}`}>
+                    {new Date(task.due_date).toLocaleDateString('en-NZ', { day: 'numeric', month: 'short' })}
+                  </span>
+                )}
+              </div>
+            </div>
+            <button
+              onClick={() => handleComplete(task.id)}
+              disabled={completing === task.id}
+              className="shrink-0 ml-2 p-1.5 rounded-lg text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors disabled:opacity-50"
+              title="Mark done"
+            >
+              {completing === task.id ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Check className="w-4 h-4" />
+              )}
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

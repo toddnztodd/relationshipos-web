@@ -14,6 +14,7 @@ import Properties from "./pages/Properties";
 import Community from "./pages/Community";
 import Territory from "./pages/Territory";
 import Settings from "./pages/Settings";
+import DoorKnock from "./pages/DoorKnock";
 import Login from "./pages/Login";
 
 function AuthenticatedApp() {
@@ -25,6 +26,7 @@ function AuthenticatedApp() {
         <Route path="/people/:id" component={PersonDetail} />
         <Route path="/properties" component={Properties} />
         <Route path="/territory" component={Territory} />
+        <Route path="/door-knock" component={DoorKnock} />
         <Route path="/community" component={Community} />
         <Route path="/settings" component={Settings} />
         <Route path="/404" component={NotFound} />

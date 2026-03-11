@@ -362,3 +362,41 @@ export async function updateFarmingProgram(id: string, data: any): Promise<any> 
 export async function deleteFarmingProgram(id: string): Promise<void> {
   await apiFetch(`/farming-programs/${id}`, { method: 'DELETE' });
 }
+
+// ── Door Knock ──
+export async function startDoorKnockSession(data: any): Promise<any> {
+  return apiFetch('/door-knock/sessions', { method: 'POST', body: JSON.stringify(data) });
+}
+
+export async function endDoorKnockSession(id: string): Promise<any> {
+  return apiFetch(`/door-knock/sessions/${id}/end`, { method: 'PUT' });
+}
+
+export async function getDoorKnockSession(id: string): Promise<any> {
+  return apiFetch(`/door-knock/sessions/${id}`);
+}
+
+export async function logDoorKnockEntry(data: any): Promise<any> {
+  return apiFetch('/door-knock/entries', { method: 'POST', body: JSON.stringify(data) });
+}
+
+export async function createContactFromEntry(entryId: string): Promise<any> {
+  return apiFetch(`/door-knock/entries/${entryId}/create-contact`, { method: 'POST' });
+}
+
+export async function getNearbySuggestions(propertyId: string): Promise<any[]> {
+  return apiFetch(`/properties/${propertyId}/nearby`);
+}
+
+// ── Follow-up Tasks ──
+export async function getFollowUpTasks(): Promise<any[]> {
+  return apiFetch('/follow-up-tasks');
+}
+
+export async function createFollowUpTask(data: any): Promise<any> {
+  return apiFetch('/follow-up-tasks', { method: 'POST', body: JSON.stringify(data) });
+}
+
+export async function updateFollowUpTask(id: string, data: any): Promise<any> {
+  return apiFetch(`/follow-up-tasks/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+}

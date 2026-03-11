@@ -431,3 +431,41 @@ export interface TerritoryProperty {
   sellability_score: number | null;
   last_listing_result?: string | null;
 }
+
+// ── Door Knock ──
+export type KnockResult = 'door_knocked' | 'spoke_to_owner' | 'spoke_to_occupant' | 'no_answer' | 'contact_captured';
+export type InterestLevel = 'not_interested' | 'neutral' | 'possibly_selling' | 'actively_considering';
+
+export interface DoorKnockSession {
+  id: string;
+  territory_id?: string;
+  started_at: string;
+  ended_at?: string;
+  total_knocks: number;
+  notes?: string;
+}
+
+export interface DoorKnockEntry {
+  id: string;
+  session_id: string;
+  property_id?: string;
+  property_address: string;
+  knock_result: KnockResult;
+  contact_name?: string;
+  contact_phone?: string;
+  interest_level?: InterestLevel;
+  voice_note_transcript?: string;
+  notes?: string;
+  created_contact_id?: string;
+  knocked_at: string;
+}
+
+export interface FollowUpTask {
+  id: string;
+  title: string;
+  description?: string;
+  related_property_id?: string;
+  related_person_id?: string;
+  due_date?: string;
+  is_completed: boolean;
+}

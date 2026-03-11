@@ -13,6 +13,7 @@ import {
   X, Pencil, Trash2, Check, RotateCcw, FileText, Footprints, Mail, DoorOpen, Heart, BarChart3,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { Link, useLocation } from 'wouter';
 
 // ── Constants ──
 const TYPE_CONFIG: Record<TerritoryType, { label: string; color: string; bg: string }> = {
@@ -282,6 +283,13 @@ function TerritoryDetail({ id, onBack }: { id: string; onBack: () => void }) {
               </div>
             </div>
             <div className="flex items-center gap-1">
+              <Link
+                href={`/door-knock?territory_id=${territory.id}&territory_name=${encodeURIComponent(territory.name)}`}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-white transition-all hover:opacity-90 active:scale-[0.98]"
+                style={{ backgroundColor: '#6FAF8F' }}
+              >
+                <DoorOpen className="w-3.5 h-3.5" /> Door Knock
+              </Link>
               <button onClick={() => setEditing(true)} className="p-2 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
                 <Pencil className="w-4 h-4" />
               </button>

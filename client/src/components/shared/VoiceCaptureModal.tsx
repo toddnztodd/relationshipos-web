@@ -6,6 +6,8 @@ interface VoiceCaptureModalProps {
   onClose: () => void;
   mode: 'contact' | 'property' | 'note';
   onResult: (data: any) => void;
+  showDoorKnock?: boolean;
+  onDoorKnock?: () => void;
 }
 
 const MODE_LABELS: Record<string, string> = {
@@ -14,7 +16,7 @@ const MODE_LABELS: Record<string, string> = {
   note: 'Quick Voice Note',
 };
 
-export function VoiceCaptureModal({ open, onClose, mode, onResult }: VoiceCaptureModalProps) {
+export function VoiceCaptureModal({ open, onClose, mode, onResult, showDoorKnock, onDoorKnock }: VoiceCaptureModalProps) {
   const [recording, setRecording] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [parsing, setParsing] = useState(false);
@@ -174,6 +176,16 @@ export function VoiceCaptureModal({ open, onClose, mode, onResult }: VoiceCaptur
             <p className="text-xs text-red-500">{error}</p>
           )}
         </div>
+
+        {showDoorKnock && onDoorKnock && (
+          <button
+            onClick={onDoorKnock}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-medium border transition-all hover:bg-gray-50 active:scale-[0.98] mb-2"
+            style={{ borderColor: '#ECEAE5', color: '#6FAF8F' }}
+          >
+            <span className="text-base">🚪</span> Start Door Knock Session
+          </button>
+        )}
 
         <div className="flex gap-2 mt-2">
           <button

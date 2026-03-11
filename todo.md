@@ -137,3 +137,16 @@
 - [x] Sidebar nav item for Territory
 - [x] Property detail integration (territory chips)
 - [x] Tests for territory features
+
+## Door Knock Workflow (March 2026)
+- [x] Door Knock types added to types/index.ts
+- [x] Door Knock API functions added to lib/api.ts
+- [x] Door Knock hooks (useDoorKnock)
+- [x] DoorKnock page with session start, active session, post-knock panel
+- [x] 10-10-20 Nearby panel
+- [x] Session summary screen
+- [x] Follow-up tasks on Dashboard
+- [x] Floating mic Door Knock integration
+- [x] /door-knock route in App.tsx
+- [x] Entry point on Territory detail page
+- [x] Tests for door knock features
