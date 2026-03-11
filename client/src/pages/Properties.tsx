@@ -4,12 +4,16 @@ import { usePropertySignals } from '@/hooks/useSignals';
 import { SignalCard } from '@/components/shared/SignalCard';
 import { ConfidenceBar } from '@/components/shared/ConfidenceBar';
 import type { Property } from '@/types';
-import { Search, Home, Loader2, ArrowLeft, MapPin, Bed, Bath, DollarSign, Tag, Users } from 'lucide-react';
+import { Search, Home, Loader2, ArrowLeft, MapPin, Bed, Bath, DollarSign, Tag, Users, Plus, X } from 'lucide-react';
+import { useCreateProperty } from '@/hooks/useProperties';
+import { VoiceRecorder } from '@/components/shared/VoiceRecorder';
+import type { PropertyCreate } from '@/types';
 
 export default function Properties() {
   const { data: properties = [], isLoading, error } = useProperties();
   const [search, setSearch] = useState('');
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
+  const [showAddForm, setShowAddForm] = useState(false);
 
   const filtered = useMemo(() => {
     if (!search.trim()) return properties;
@@ -31,6 +35,15 @@ export default function Properties() {
     );
   }
 
+  if (showAddForm) {
+    return (
+      <AddPropertyForm
+        onClose={() => setShowAddForm(false)}
+        onCreated={() => setShowAddForm(false)}
+      />
+    );
+  }
+
   return (
     <div className="p-6 max-w-3xl">
       <div className="flex items-center justify-between mb-6">
@@ -40,6 +53,14 @@ export default function Properties() {
             {properties.length} propert{properties.length !== 1 ? 'ies' : 'y'}
           </p>
         </div>
+        <button
+          onClick={() => setShowAddForm(true)}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium text-white hover:opacity-90 transition-colors"
+          style={{ backgroundColor: '#6FAF8F' }}
+        >
+          <Plus className="w-3.5 h-3.5" />
+          Add Property
+        </button>
       </div>
 
       <div className="relative mb-4">
@@ -308,6 +329,205 @@ function InfoTile({ icon: Icon, label, value }: { icon: React.ElementType; label
         <p className="text-xs text-gray-500">{label}</p>
       </div>
       <p className="text-sm font-medium text-gray-900">{value}</p>
+    </div>
+  );
+}
+
+// ── Add Property Form ──
+function AddPropertyForm({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
+  const createProp = useCreateProperty();
+  const [form, setForm] = useState<Record<string, string>>({
+    address: '',
+    suburb: '',
+    city: '',
+    bedrooms: '',
+    bathrooms: '',
+    property_type: '',
+    notes: '',
+    estimated_value: '',
+    land_area: '',
+  });
+  const [submitting, setSubmitting] = useState(false);
+
+  function updateField(field: string, value: string) {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!form.address.trim()) return;
+    setSubmitting(true);
+    try {
+      const payload: PropertyCreate = {
+        address: form.address.trim(),
+        suburb: form.suburb?.trim() || null,
+        city: form.city?.trim() || null,
+        bedrooms: form.bedrooms ? Number(form.bedrooms) : null,
+        bathrooms: form.bathrooms ? Number(form.bathrooms) : null,
+        property_type: form.property_type?.trim() || null,
+        notes: form.notes?.trim() || null,
+        estimated_value: form.estimated_value ? Number(form.estimated_value.replace(/[^0-9.]/g, '')) : null,
+      };
+      await createProp.mutateAsync(payload);
+      onCreated();
+    } catch {
+      // Error handled by mutation
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <div className="p-6 max-w-lg">
+      <button
+        onClick={onClose}
+        className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 transition-colors mb-4"
+      >
+        <X className="w-3.5 h-3.5" />
+        Cancel
+      </button>
+      <h1 className="text-xl font-semibold text-gray-900 mb-6">Add Property</h1>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Voice Fill */}
+        <VoiceRecorder
+          parseEndpoint="/api/v1/properties/parse-voice"
+          label="Speak to fill"
+          onTranscript={() => {}}
+          onParsed={(data: any) => {
+            if (data.address) updateField('address', data.address);
+            if (data.suburb) updateField('suburb', data.suburb);
+            if (data.city) updateField('city', data.city);
+            if (data.bedrooms !== undefined) updateField('bedrooms', String(data.bedrooms));
+            if (data.bathrooms !== undefined) updateField('bathrooms', String(data.bathrooms));
+            if (data.land_size || data.land_area) updateField('land_area', data.land_size || data.land_area);
+            if (data.property_type) updateField('property_type', data.property_type);
+            if (data.cv || data.estimated_value) updateField('estimated_value', data.cv || data.estimated_value);
+            if (data.notes) updateField('notes', data.notes);
+          }}
+        />
+
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">Address *</label>
+          <input
+            type="text"
+            value={form.address}
+            onChange={(e) => updateField('address', e.target.value)}
+            placeholder="e.g. 42 Queen Street"
+            className="w-full px-3 py-2 rounded-lg border bg-white text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#6FAF8F]/30 focus:border-[#6FAF8F] transition-colors"
+            style={{ borderColor: '#ECEAE5' }}
+            required
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Suburb</label>
+            <input
+              type="text"
+              value={form.suburb}
+              onChange={(e) => updateField('suburb', e.target.value)}
+              placeholder="e.g. Ponsonby"
+              className="w-full px-3 py-2 rounded-lg border bg-white text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#6FAF8F]/30 focus:border-[#6FAF8F] transition-colors"
+              style={{ borderColor: '#ECEAE5' }}
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">City</label>
+            <input
+              type="text"
+              value={form.city}
+              onChange={(e) => updateField('city', e.target.value)}
+              placeholder="e.g. Auckland"
+              className="w-full px-3 py-2 rounded-lg border bg-white text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#6FAF8F]/30 focus:border-[#6FAF8F] transition-colors"
+              style={{ borderColor: '#ECEAE5' }}
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-3">
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Bedrooms</label>
+            <input
+              type="number"
+              value={form.bedrooms}
+              onChange={(e) => updateField('bedrooms', e.target.value)}
+              min="0"
+              className="w-full px-3 py-2 rounded-lg border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#6FAF8F]/30 focus:border-[#6FAF8F] transition-colors"
+              style={{ borderColor: '#ECEAE5' }}
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Bathrooms</label>
+            <input
+              type="number"
+              value={form.bathrooms}
+              onChange={(e) => updateField('bathrooms', e.target.value)}
+              min="0"
+              className="w-full px-3 py-2 rounded-lg border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#6FAF8F]/30 focus:border-[#6FAF8F] transition-colors"
+              style={{ borderColor: '#ECEAE5' }}
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Land Area</label>
+            <input
+              type="text"
+              value={form.land_area}
+              onChange={(e) => updateField('land_area', e.target.value)}
+              placeholder="m²"
+              className="w-full px-3 py-2 rounded-lg border bg-white text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#6FAF8F]/30 focus:border-[#6FAF8F] transition-colors"
+              style={{ borderColor: '#ECEAE5' }}
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Property Type</label>
+            <input
+              type="text"
+              value={form.property_type}
+              onChange={(e) => updateField('property_type', e.target.value)}
+              placeholder="e.g. House, Apartment"
+              className="w-full px-3 py-2 rounded-lg border bg-white text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#6FAF8F]/30 focus:border-[#6FAF8F] transition-colors"
+              style={{ borderColor: '#ECEAE5' }}
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Estimated Value</label>
+            <input
+              type="text"
+              value={form.estimated_value}
+              onChange={(e) => updateField('estimated_value', e.target.value)}
+              placeholder="$1,200,000"
+              className="w-full px-3 py-2 rounded-lg border bg-white text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#6FAF8F]/30 focus:border-[#6FAF8F] transition-colors"
+              style={{ borderColor: '#ECEAE5' }}
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">Notes</label>
+          <textarea
+            value={form.notes}
+            onChange={(e) => updateField('notes', e.target.value)}
+            placeholder="Any notes about this property…"
+            rows={3}
+            className="w-full px-3 py-2 rounded-lg border bg-white text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#6FAF8F]/30 focus:border-[#6FAF8F] transition-colors resize-none"
+            style={{ borderColor: '#ECEAE5' }}
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={submitting || !form.address.trim()}
+          className="w-full px-4 py-2.5 rounded-lg text-sm font-medium text-white hover:opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          style={{ backgroundColor: '#6FAF8F' }}
+        >
+          {submitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+          Add Property
+        </button>
+      </form>
     </div>
   );
 }

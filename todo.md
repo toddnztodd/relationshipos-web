@@ -43,9 +43,9 @@
 
 ## Milestone 5 — Voice Fill
 - [x] Build VoiceFillButton component (placeholder)
-- [ ] Wire into Add Contact form
-- [ ] Wire into Add/Edit Property form
-- [ ] Deploy Milestone 5
+- [x] Wire into Add Contact form
+- [x] Wire into Add/Edit Property form
+- [x] Deploy Milestone 5
 
 ## Milestone 6 — Community + Checklist
 - [x] Build Community Entities list and detail
@@ -95,5 +95,14 @@
 - [x] Fetch vaulted contacts for Vault tab
 - [x] Fetch private contacts for Private tab
 - [x] Write vitest tests
+- [x] Deploy with public visibility
+- [x] Push to GitHub
+
+## Voice Fill Completion
+- [x] Create shared VoiceRecorder.tsx component
+- [x] Wire VoiceRecorder into Add Contact form (People.tsx)
+- [x] Wire VoiceRecorder into Add Property form (Properties.tsx)
+- [x] Update VaultDialog to use shared VoiceRecorder
+- [x] Write vitest tests for VoiceRecorder
 - [x] Deploy with public visibility
 - [x] Push to GitHub

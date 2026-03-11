@@ -10,6 +10,7 @@ import { BulkVaultDialog } from '@/components/people/BulkVaultDialog';
 import { ContactReappearancePrompt } from '@/components/people/ContactReappearancePrompt';
 import { HealthBadge } from '@/components/shared/HealthBadge';
 import { Search, Users, Loader2, Plus, CheckSquare, X, Archive, RotateCcw, ShieldCheck } from 'lucide-react';
+import { VoiceRecorder } from '@/components/shared/VoiceRecorder';
 import type { Person, Tier, PersonCreate } from '@/types';
 import { personDisplayName } from '@/types';
 
@@ -593,6 +594,21 @@ function AddContactForm({ onClose, onCreated }: { onClose: () => void; onCreated
       <h1 className="text-xl font-semibold text-gray-900 mb-6">Add Contact</h1>
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Voice Fill */}
+        <VoiceRecorder
+          parseEndpoint="/api/v1/people/parse-voice"
+          label="Speak to fill"
+          onTranscript={() => {}}
+          onParsed={(data: any) => {
+            if (data.first_name) updateField('first_name', data.first_name);
+            if (data.last_name) updateField('last_name', data.last_name);
+            if (data.phone) updateField('phone', data.phone);
+            if (data.email) updateField('email', data.email);
+            if (data.suburb) updateField('suburb', data.suburb);
+            if (data.notes) updateField('notes', data.notes);
+          }}
+        />
+
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">First Name *</label>
