@@ -1,18 +1,14 @@
-import type { Signal } from '@/types';
+import type { Signal, SignalListResponse, SignalDetectResponse } from '@/types';
+import { getToken } from './api';
 
 const API_BASE = 'https://relationshipos-api.onrender.com/api/v1';
-const TIMEOUT = 20000;
+const TIMEOUT = 20_000;
 
-function headers(): Record<string, string> {
-  const token = localStorage.getItem('auth_token');
+function authHeaders(): Record<string, string> {
+  const token = getToken();
   const h: Record<string, string> = {};
   if (token) h['Authorization'] = `Bearer ${token}`;
   return h;
-}
-
-export interface DetectResult {
-  created: number;
-  deactivated: number;
 }
 
 export async function getSignals(filters?: {
@@ -28,35 +24,38 @@ export async function getSignals(filters?: {
   const qs = params.toString();
   const url = `${API_BASE}/signals${qs ? '?' + qs : ''}`;
   const res = await fetch(url, {
-    headers: headers(),
+    headers: authHeaders(),
     signal: AbortSignal.timeout(TIMEOUT),
   });
   if (!res.ok) return [];
-  return res.json();
+  const data: SignalListResponse = await res.json();
+  return data.signals ?? data as any;
 }
 
 export async function getPropertySignals(propertyId: string | number): Promise<Signal[]> {
   const res = await fetch(`${API_BASE}/properties/${propertyId}/signals`, {
-    headers: headers(),
+    headers: authHeaders(),
     signal: AbortSignal.timeout(TIMEOUT),
   });
   if (!res.ok) return [];
-  return res.json();
+  const data = await res.json();
+  return data.signals ?? data;
 }
 
 export async function getPersonSignals(personId: string | number): Promise<Signal[]> {
   const res = await fetch(`${API_BASE}/people/${personId}/signals`, {
-    headers: headers(),
+    headers: authHeaders(),
     signal: AbortSignal.timeout(TIMEOUT),
   });
   if (!res.ok) return [];
-  return res.json();
+  const data = await res.json();
+  return data.signals ?? data;
 }
 
-export async function detectSignals(): Promise<DetectResult> {
+export async function detectSignals(): Promise<SignalDetectResponse> {
   const res = await fetch(`${API_BASE}/signals/detect`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...headers() },
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
     signal: AbortSignal.timeout(30000),
   });
   if (!res.ok) throw new Error('Detection failed');

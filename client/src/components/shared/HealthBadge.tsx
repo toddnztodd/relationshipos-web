@@ -8,13 +8,13 @@ const CONFIG: Record<HealthStatus, { label: string; classes: string }> = {
 };
 
 interface HealthBadgeProps {
-  status?: HealthStatus;
+  status?: string | null;
   className?: string;
 }
 
 export function HealthBadge({ status, className }: HealthBadgeProps) {
   if (!status) return null;
-  const cfg = CONFIG[status];
+  const cfg = CONFIG[status as HealthStatus];
   return (
     <span
       className={cn(

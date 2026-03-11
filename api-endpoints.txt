@@ -1,0 +1,72 @@
+RelationshipOS API Endpoints (from OpenAPI spec)
+
+AUTH:
+POST /api/v1/auth/register
+POST /api/v1/auth/login
+
+PEOPLE:
+POST /api/v1/people/parse-voice
+POST /api/v1/people/
+GET /api/v1/people/
+GET /api/v1/people/next-best
+GET /api/v1/people/search
+GET /api/v1/people/{person_id}
+PUT /api/v1/people/{person_id}
+DELETE /api/v1/people/{person_id}
+
+PROPERTIES:
+POST /api/v1/properties/
+GET /api/v1/properties/
+GET /api/v1/properties/appraisals
+GET /api/v1/properties/doorknock
+PATCH /api/v1/properties/{property_id}/appraisal-stage
+GET /api/v1/properties/{property_id}
+PUT /api/v1/properties/{property_id}
+DELETE /api/v1/properties/{property_id}
+
+ACTIVITIES:
+POST /api/v1/activities/transcribe
+POST /api/v1/activities/analyze-screenshot
+POST /api/v1/activities/
+GET /api/v1/activities/
+POST /api/v1/activities/quick-log
+GET /api/v1/activities/{activity_id}
+PUT /api/v1/activities/{activity_id}
+DELETE /api/v1/activities/{activity_id}
+
+DASHBOARD:
+GET /api/v1/dashboard
+GET /api/v1/dashboard/summary
+GET /api/v1/dashboard/briefing
+
+SIGNALS:
+POST /api/v1/signals/detect
+GET /api/v1/signals
+GET /api/v1/properties/{property_id}/signals
+GET /api/v1/people/{person_id}/signals
+
+COMMUNITY:
+GET /api/v1/community-entities/
+POST /api/v1/community-entities/
+GET /api/v1/community-entities/{entity_id}
+PATCH /api/v1/community-entities/{entity_id}
+DELETE /api/v1/community-entities/{entity_id}
+
+BUYER INTEREST:
+GET /api/v1/properties/{property_id}/buyer-interest
+POST /api/v1/properties/{property_id}/buyer-interest
+PATCH /api/v1/buyer-interest/{interest_id}
+DELETE /api/v1/buyer-interest/{interest_id}
+
+OWNERS:
+GET /api/v1/properties/{property_id}/owners
+POST /api/v1/properties/{property_id}/owners
+DELETE /api/v1/properties/{property_id}/owners/{person_id}
+
+CHECKLIST:
+GET /api/v1/properties/{property_id}/checklist
+POST /api/v1/properties/{property_id}/checklist
+DELETE /api/v1/properties/{property_id}/checklist
+PATCH /api/v1/properties/{property_id}/checklist/{item_id}
+
+NOTE: API requires auth. Register/login first to get JWT token.

@@ -7,7 +7,7 @@ import {
   getPropertyBuyerInterest,
   getPropertyOwners,
 } from '@/lib/api';
-import type { Property } from '@/types';
+import type { PropertyCreate } from '@/types';
 
 export function useProperties() {
   return useQuery({
@@ -47,7 +47,7 @@ export function usePropertyOwners(id: number | string | undefined) {
 export function useCreateProperty() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: Partial<Property>) => createProperty(data),
+    mutationFn: (data: PropertyCreate) => createProperty(data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['properties'] }),
   });
 }
@@ -55,7 +55,7 @@ export function useCreateProperty() {
 export function useUpdateProperty() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: number | string; data: Partial<Property> }) =>
+    mutationFn: ({ id, data }: { id: number | string; data: Partial<PropertyCreate> }) =>
       updateProperty(id, data),
     onSuccess: (_data, vars) => {
       qc.invalidateQueries({ queryKey: ['properties'] });

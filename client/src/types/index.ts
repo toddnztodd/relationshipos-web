@@ -1,6 +1,8 @@
-export type Tier = 'A' | 'B' | 'C' | 'D';
+// ── Enums ──
+export type Tier = 'A' | 'B' | 'C';
 export type HealthStatus = 'healthy' | 'at_risk' | 'overdue';
-export type BuyerStage = 'seen' | 'interested' | 'hot' | 'offer' | 'purchased';
+export type InteractionType = 'call' | 'email' | 'meeting' | 'note' | 'text' | 'open_home' | 'door_knock' | 'social' | 'other';
+
 export type SignalType =
   | 'listing_opportunity'
   | 'buyer_match'
@@ -8,92 +10,320 @@ export type SignalType =
   | 'relationship_cooling'
   | 'relationship_warming'
   | 'community_cluster';
+
+export type EntityType = 'person' | 'property' | 'community';
 export type SourceType = 'voice_note' | 'email' | 'meeting' | 'system';
 
+// ── Person ──
 export interface Person {
   id: number;
-  name: string;
-  email?: string;
-  phone?: string;
-  tier?: Tier;
-  health_status?: HealthStatus;
-  last_contacted_at?: string;
-  last_contact_channel?: string;
-  notes?: string;
-  tags?: string[];
+  user_id: number;
+  first_name: string;
+  last_name: string | null;
+  phone: string;
+  email: string | null;
+  suburb: string | null;
+  relationship_type: string | null;
+  relationship_types: string[] | null;
+  influence_score: number | null;
+  tier: Tier;
+  lead_source: string | null;
+  buyer_readiness_status: string | null;
+  notes: string | null;
+  is_relationship_asset: boolean | null;
+  health_status: string | null;
+  cadence_days: number | null;
+  last_meaningful_interaction: string | null;
+  days_since_contact: number | null;
+  next_contact_due: string | null;
+  last_interaction_channel: string | null;
+  preferred_contact_channel: string | null;
+  nickname: string | null;
+  buyer_interest: number | null;
+  seller_likelihood: number | null;
+  perceived_value: string | null;
+  tags: string[] | null;
   created_at: string;
+  updated_at: string;
 }
 
+export interface PersonCreate {
+  first_name: string;
+  last_name?: string | null;
+  phone: string;
+  email?: string | null;
+  suburb?: string | null;
+  relationship_type?: string | null;
+  relationship_types?: string[] | null;
+  tier?: Tier;
+  notes?: string | null;
+  tags?: string[] | null;
+  preferred_contact_channel?: string | null;
+  nickname?: string | null;
+}
+
+/** Helper to get display name from any object with first_name/last_name */
+export function personDisplayName(p: { first_name: string; last_name?: string | null }): string {
+  return [p.first_name, p.last_name].filter(Boolean).join(' ');
+}
+
+// ── Property ──
 export interface Property {
   id: number;
+  user_id: number;
   address: string;
-  bedrooms?: number;
-  bathrooms?: number;
-  land_size?: string;
-  cv?: string;
-  last_sold_amount?: string;
-  last_sold_date?: string;
-  current_listing_price?: string;
-  listing_url?: string;
-  listing_agent?: string;
-  listing_agency?: string;
-  last_listed_date?: string;
-  last_listing_result?: string;
-  sellability?: number;
+  suburb: string | null;
+  city: string | null;
+  bedrooms: number | null;
+  bathrooms: number | null;
+  toilets: number | null;
+  ensuites: number | null;
+  living_rooms: number | null;
+  has_pool: boolean | null;
+  renovation_status: string | null;
+  years_owned: number | null;
+  council_valuation: number | null;
+  estimated_value: number | null;
+  land_area: number | null;
+  floor_area: number | null;
+  property_type: string | null;
+  zoning: string | null;
+  sellability_score: number | null;
+  sellability_label: string | null;
+  appraisal_stage: string | null;
+  notes: string | null;
+  tags: string[] | null;
   created_at: string;
+  updated_at: string;
 }
 
+export interface PropertyCreate {
+  address: string;
+  suburb?: string | null;
+  city?: string | null;
+  bedrooms?: number | null;
+  bathrooms?: number | null;
+  property_type?: string | null;
+  notes?: string | null;
+  estimated_value?: number | null;
+  sellability_score?: number | null;
+  sellability_label?: string | null;
+}
+
+// ── Activity ──
+export interface Activity {
+  id: number;
+  user_id: number;
+  person_id: number | null;
+  property_id: number | null;
+  interaction_type: InteractionType;
+  date: string;
+  notes: string | null;
+  is_meaningful: boolean;
+  due_date: string | null;
+  feedback: string | null;
+  price_indication: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ActivityCreate {
+  person_id?: number | null;
+  property_id?: number | null;
+  interaction_type: InteractionType;
+  date?: string;
+  notes?: string | null;
+  is_meaningful?: boolean;
+}
+
+// ── Signal ──
 export interface Signal {
   id: number;
   signal_type: SignalType;
-  entity_type: 'person' | 'property' | 'community';
+  entity_type: EntityType;
   entity_id: number;
+  entity_name: string | null;
   confidence: number;
-  source_contact_id?: number;
-  source_type?: SourceType;
+  source_contact_id: number | null;
+  source_type: string;
   description: string;
-  created_at: string;
   is_active: boolean;
-  entity_name?: string;
+  created_at: string;
+  updated_at: string;
 }
 
+export interface SignalListResponse {
+  signals: Signal[];
+  total: number;
+}
+
+export interface SignalDetectResponse {
+  signals_created: number;
+  signals_deactivated: number;
+  total_active: number;
+}
+
+// ── Dashboard ──
+export interface DriftingRelationship {
+  id: number;
+  first_name: string;
+  last_name: string | null;
+  tier: Tier;
+  days_since_contact: number | null;
+  health_status: string;
+}
+
+export interface DueForContact {
+  id: number;
+  first_name: string;
+  last_name: string | null;
+  tier: Tier;
+  days_since_contact: number | null;
+  cadence_days: number | null;
+}
+
+export interface CadenceSummary {
+  total_people: number;
+  green: number;
+  amber: number;
+  red: number;
+  needs_attention: number;
+}
+
+export interface TierBreakdown {
+  tier_a: number;
+  tier_b: number;
+  tier_c: number;
+  tier_d: number;
+  total: number;
+}
+
+export interface DashboardData {
+  a_tier_drifting: DriftingRelationship[];
+  due_for_contact_this_week: DueForContact[];
+  cadence_summary: CadenceSummary;
+  tier_breakdown: TierBreakdown;
+  active_listings: number;
+  active_appraisals: number;
+}
+
+// ── Briefing ──
+export interface BriefingContact {
+  id: number;
+  first_name: string;
+  last_name: string | null;
+  phone: string;
+  tier: Tier;
+  health_status: string;
+  days_since_contact: number | null;
+  reason: string;
+}
+
+export interface BriefingSignal {
+  id: number;
+  signal_type: string;
+  entity_type: string;
+  entity_id: number;
+  entity_name: string | null;
+  confidence: number;
+  description: string;
+}
+
+export interface BriefingData {
+  contacts: BriefingContact[];
+  signals: BriefingSignal[];
+  total: number;
+}
+
+// ── Next Best Contacts ──
+export interface NextBestContact {
+  id: number;
+  first_name: string;
+  last_name: string | null;
+  nickname: string | null;
+  phone: string;
+  email: string | null;
+  tier: Tier;
+  health_status: string;
+  days_since_contact: number | null;
+  cadence_limit: number;
+  last_interaction_channel: string | null;
+}
+
+// ── Buyer Interest ──
 export interface BuyerInterest {
   id: number;
   property_id: number;
-  person_id: number;
-  stage: BuyerStage;
-  person_name?: string;
-  notes?: string;
-}
-
-export interface Activity {
-  id: number;
-  person_id: number;
-  type: string;
-  notes?: string;
+  person_id: number | null;
+  person_name: string | null;
+  interest_level: number | null;
+  notes: string | null;
+  status: string | null;
   created_at: string;
+  updated_at: string;
 }
 
+// ── Property Owner ──
+export interface PropertyOwner {
+  person_id: number;
+  first_name: string;
+  last_name: string | null;
+  phone: string | null;
+  email: string | null;
+  role: string | null;
+}
+
+// ── Community Entity ──
 export interface CommunityEntity {
   id: number;
   name: string;
-  type?: string;
-  description?: string;
+  type: string;
+  location: string | null;
+  notes: string | null;
   created_at: string;
+  updated_at: string;
+  people: CommunityPersonLink[];
+  properties: CommunityPropertyLink[];
+  recent_activities: CommunityActivityLink[];
 }
 
-export interface BriefingContact {
-  id: number;
+export interface CommunityPersonLink {
+  person_id: number;
+  first_name: string;
+  last_name: string | null;
+  role: string | null;
+}
+
+export interface CommunityPropertyLink {
+  property_id: number;
+  address: string;
+}
+
+export interface CommunityActivityLink {
+  activity_id: number;
+  interaction_type: string;
+  date: string;
+  notes: string | null;
+}
+
+export interface CommunityEntityCreate {
   name: string;
-  tier?: Tier;
-  health_status?: HealthStatus;
-  days_since_contact?: number;
-  last_contact_channel?: string;
-  reason?: string;
+  type?: string;
+  location?: string | null;
+  notes?: string | null;
 }
 
-export interface Briefing {
-  contacts: BriefingContact[];
-  signals: Signal[];
-  quick_wins?: any[];
+// ── Auth ──
+export interface AuthCredentials {
+  email: string;
+  password: string;
+}
+
+export interface AuthRegister extends AuthCredentials {
+  full_name: string;
+}
+
+export interface AuthToken {
+  access_token: string;
+  token_type: string;
 }

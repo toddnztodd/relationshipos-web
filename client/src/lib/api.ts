@@ -1,134 +1,158 @@
 import type {
-  Person,
-  Property,
-  Activity,
-  BuyerInterest,
-  CommunityEntity,
-  Briefing,
+  Person, PersonCreate, Property, PropertyCreate, Activity, ActivityCreate,
+  DashboardData, BriefingData, NextBestContact, BuyerInterest, PropertyOwner,
+  CommunityEntity, CommunityEntityCreate, AuthCredentials, AuthRegister, AuthToken,
 } from '@/types';
 
 const API_BASE = 'https://relationshipos-api.onrender.com/api/v1';
-const TIMEOUT = 20000;
+const TIMEOUT = 20_000;
 
-function headers(): Record<string, string> {
-  const token = localStorage.getItem('auth_token');
-  const h: Record<string, string> = { 'Content-Type': 'application/json' };
-  if (token) h['Authorization'] = `Bearer ${token}`;
-  return h;
+// ── Token management ──
+let _token: string | null = localStorage.getItem('ros_token');
+
+export function getToken(): string | null { return _token; }
+
+export function setToken(token: string | null) {
+  _token = token;
+  if (token) localStorage.setItem('ros_token', token);
+  else localStorage.removeItem('ros_token');
 }
 
-async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
+export function isAuthenticated(): boolean { return !!_token; }
+
+// ── Fetch helper ──
+async function apiFetch<T>(path: string, opts: RequestInit = {}): Promise<T> {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(opts.headers as Record<string, string> ?? {}),
+  };
+  if (_token) headers['Authorization'] = `Bearer ${_token}`;
+
   const res = await fetch(`${API_BASE}${path}`, {
-    ...init,
-    headers: { ...headers(), ...(init?.headers as Record<string, string> ?? {}) },
-    signal: init?.signal ?? AbortSignal.timeout(TIMEOUT),
+    ...opts,
+    headers,
+    signal: opts.signal ?? AbortSignal.timeout(TIMEOUT),
   });
+
+  if (res.status === 401) {
+    setToken(null);
+    throw new Error('Unauthorized — please log in again');
+  }
   if (!res.ok) {
-    const text = await res.text().catch(() => '');
-    throw new Error(`API ${res.status}: ${text || res.statusText}`);
+    const body = await res.text().catch(() => '');
+    throw new Error(`API ${res.status}: ${body}`);
   }
   return res.json();
 }
 
-// ── People ──────────────────────────────────────────────────────────────────
+// ── Auth ──
+export async function register(data: AuthRegister): Promise<{ id: number; email: string }> {
+  return apiFetch('/auth/register', { method: 'POST', body: JSON.stringify(data) });
+}
+
+export async function login(data: AuthCredentials): Promise<AuthToken> {
+  const token = await apiFetch<AuthToken>('/auth/login', { method: 'POST', body: JSON.stringify(data) });
+  setToken(token.access_token);
+  return token;
+}
+
+export function logout() { setToken(null); }
+
+// ── People ──
 export async function getPeople(): Promise<Person[]> {
-  return apiFetch<Person[]>('/people');
+  return apiFetch('/people/');
 }
 
 export async function getPerson(id: number | string): Promise<Person> {
-  return apiFetch<Person>(`/people/${id}`);
+  return apiFetch(`/people/${id}`);
 }
 
-export async function createPerson(data: Partial<Person>): Promise<Person> {
-  return apiFetch<Person>('/people', {
+export async function createPerson(data: PersonCreate): Promise<Person> {
+  return apiFetch('/people/', { method: 'POST', body: JSON.stringify(data) });
+}
+
+export async function updatePerson(id: number | string, data: Partial<PersonCreate>): Promise<Person> {
+  return apiFetch(`/people/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+}
+
+export async function searchPeople(q: string): Promise<Person[]> {
+  return apiFetch(`/people/search?q=${encodeURIComponent(q)}`);
+}
+
+export async function getNextBestContacts(): Promise<NextBestContact[]> {
+  return apiFetch('/people/next-best');
+}
+
+export async function parseVoicePerson(transcription: string): Promise<Partial<PersonCreate>> {
+  return apiFetch('/people/parse-voice', {
     method: 'POST',
-    body: JSON.stringify(data),
+    body: JSON.stringify({ transcription }),
   });
 }
 
-export async function updatePerson(id: number | string, data: Partial<Person>): Promise<Person> {
-  return apiFetch<Person>(`/people/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(data),
-  });
+// ── Activities ──
+export async function getActivities(params?: { person_id?: number; property_id?: number }): Promise<Activity[]> {
+  const qs = new URLSearchParams();
+  if (params?.person_id) qs.set('person_id', String(params.person_id));
+  if (params?.property_id) qs.set('property_id', String(params.property_id));
+  const q = qs.toString();
+  return apiFetch(`/activities/${q ? '?' + q : ''}`);
 }
 
-export async function getPersonActivities(id: number | string): Promise<Activity[]> {
-  return apiFetch<Activity[]>(`/people/${id}/activities`);
+export async function createActivity(data: ActivityCreate): Promise<Activity> {
+  return apiFetch('/activities/', { method: 'POST', body: JSON.stringify(data) });
 }
 
-export async function createActivity(personId: number | string, data: Partial<Activity>): Promise<Activity> {
-  return apiFetch<Activity>(`/people/${personId}/activities`, {
-    method: 'POST',
-    body: JSON.stringify(data),
-  });
-}
-
-export async function parseVoicePerson(audioBlob: Blob): Promise<Partial<Person>> {
-  const formData = new FormData();
-  formData.append('audio', audioBlob, 'recording.webm');
-  const res = await fetch(`${API_BASE}/people/parse-voice`, {
-    method: 'POST',
-    body: formData,
-    signal: AbortSignal.timeout(30000),
-  });
-  if (!res.ok) throw new Error('Voice parse failed');
-  return res.json();
-}
-
-// ── Properties ──────────────────────────────────────────────────────────────
+// ── Properties ──
 export async function getProperties(): Promise<Property[]> {
-  return apiFetch<Property[]>('/properties');
+  return apiFetch('/properties/');
 }
 
 export async function getProperty(id: number | string): Promise<Property> {
-  return apiFetch<Property>(`/properties/${id}`);
+  return apiFetch(`/properties/${id}`);
 }
 
-export async function createProperty(data: Partial<Property>): Promise<Property> {
-  return apiFetch<Property>('/properties', {
-    method: 'POST',
-    body: JSON.stringify(data),
-  });
+export async function createProperty(data: PropertyCreate): Promise<Property> {
+  return apiFetch('/properties/', { method: 'POST', body: JSON.stringify(data) });
 }
 
-export async function updateProperty(id: number | string, data: Partial<Property>): Promise<Property> {
-  return apiFetch<Property>(`/properties/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(data),
-  });
+export async function updateProperty(id: number | string, data: Partial<PropertyCreate>): Promise<Property> {
+  return apiFetch(`/properties/${id}`, { method: 'PUT', body: JSON.stringify(data) });
 }
 
 export async function getPropertyBuyerInterest(id: number | string): Promise<BuyerInterest[]> {
-  return apiFetch<BuyerInterest[]>(`/properties/${id}/buyer-interest`);
+  return apiFetch(`/properties/${id}/buyer-interest`);
 }
 
-export async function getPropertyOwners(id: number | string): Promise<Person[]> {
-  return apiFetch<Person[]>(`/properties/${id}/owners`);
+export async function getPropertyOwners(id: number | string): Promise<PropertyOwner[]> {
+  return apiFetch(`/properties/${id}/owners`);
 }
 
-export async function parseVoiceProperty(audioBlob: Blob): Promise<Partial<Property>> {
-  const formData = new FormData();
-  formData.append('audio', audioBlob, 'recording.webm');
-  const res = await fetch(`${API_BASE}/properties/parse-voice`, {
+export async function parseVoiceProperty(transcription: string): Promise<Partial<PropertyCreate>> {
+  return apiFetch('/properties/parse-voice', {
     method: 'POST',
-    body: formData,
-    signal: AbortSignal.timeout(30000),
+    body: JSON.stringify({ transcription }),
   });
-  if (!res.ok) throw new Error('Voice parse failed');
-  return res.json();
 }
 
-// ── Community ───────────────────────────────────────────────────────────────
-export async function getCommunities(): Promise<CommunityEntity[]> {
-  return apiFetch<CommunityEntity[]>('/communities');
+// ── Dashboard ──
+export async function getDashboard(): Promise<DashboardData> {
+  return apiFetch('/dashboard');
 }
 
-export async function getCommunity(id: number | string): Promise<CommunityEntity> {
-  return apiFetch<CommunityEntity>(`/communities/${id}`);
+export async function getBriefing(): Promise<BriefingData> {
+  return apiFetch('/dashboard/briefing');
 }
 
-// ── Dashboard ───────────────────────────────────────────────────────────────
-export async function getBriefing(): Promise<Briefing> {
-  return apiFetch<Briefing>('/dashboard/briefing');
+// ── Community ──
+export async function getCommunityEntities(): Promise<CommunityEntity[]> {
+  return apiFetch('/community-entities/');
+}
+
+export async function getCommunityEntity(id: number | string): Promise<CommunityEntity> {
+  return apiFetch(`/community-entities/${id}`);
+}
+
+export async function createCommunityEntity(data: CommunityEntityCreate): Promise<CommunityEntity> {
+  return apiFetch('/community-entities/', { method: 'POST', body: JSON.stringify(data) });
 }

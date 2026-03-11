@@ -1,11 +1,39 @@
-import { useParams } from 'wouter';
+import { useParams, useLocation } from 'wouter';
+import { usePerson } from '@/hooks/usePeople';
+import { PersonDetailPanel } from '@/components/people/PersonDetailPanel';
+import { Loader2 } from 'lucide-react';
 
 export default function PersonDetail() {
   const params = useParams<{ id: string }>();
+  const [, setLocation] = useLocation();
+  const { data: person, isLoading, error } = usePerson(params.id);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+      </div>
+    );
+  }
+
+  if (error || !person) {
+    return (
+      <div className="p-6 text-center">
+        <p className="text-sm text-red-500">Person not found</p>
+        <button
+          onClick={() => setLocation('/people')}
+          className="mt-2 text-xs text-emerald-600 hover:underline"
+        >
+          Back to People
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-semibold text-gray-900">Person Detail</h1>
-      <p className="mt-1 text-sm text-gray-500">Details for person #{params.id}</p>
-    </div>
+    <PersonDetailPanel
+      person={person}
+      onBack={() => setLocation('/people')}
+    />
   );
 }
