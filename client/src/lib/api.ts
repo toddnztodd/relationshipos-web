@@ -90,6 +90,44 @@ export async function parseVoicePerson(transcription: string): Promise<Partial<P
   });
 }
 
+// ── Vault / Privacy ──
+export async function vaultContact(id: number, vaultNote?: string): Promise<Person> {
+  return apiFetch(`/people/${id}/vault`, {
+    method: 'PATCH',
+    body: JSON.stringify({ vault_note: vaultNote }),
+  });
+}
+
+export async function restoreContact(id: number): Promise<Person> {
+  return apiFetch(`/people/${id}/restore`, { method: 'PATCH' });
+}
+
+export async function makeContactPrivate(id: number): Promise<Person> {
+  return apiFetch(`/people/${id}/make-private`, { method: 'PATCH' });
+}
+
+export async function bulkVaultContacts(ids: number[], vaultNote?: string): Promise<{ vaulted: number }> {
+  return apiFetch('/people/bulk-vault', {
+    method: 'POST',
+    body: JSON.stringify({ ids, vault_note: vaultNote }),
+  });
+}
+
+export async function checkDuplicate(params: { phone?: string; email?: string; name?: string }): Promise<{ match: Person | null; match_type: 'phone' | 'email' | 'name' | null }> {
+  try {
+    return await apiFetch('/people/check-duplicate', {
+      method: 'POST',
+      body: JSON.stringify(params),
+    });
+  } catch {
+    return { match: null, match_type: null };
+  }
+}
+
+export async function deletePerson(id: number): Promise<void> {
+  await apiFetch(`/people/${id}`, { method: 'DELETE' });
+}
+
 // ── Activities ──
 export async function getActivities(params?: { person_id?: number; property_id?: number }): Promise<Activity[]> {
   const qs = new URLSearchParams();

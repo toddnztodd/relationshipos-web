@@ -68,3 +68,15 @@
 - [x] Token management logic tests
 - [x] Dashboard top signals filtering tests
 - [x] API URL construction tests
+
+## Contact Vault System
+- [x] Add vault API functions to lib/api.ts (vaultContact, restoreContact, makeContactPrivate, bulkVaultContacts, checkDuplicate)
+- [x] Create VaultDialog component (3 options: vault, private, delete)
+- [x] Create BulkVaultDialog component (bulk vault with shared note)
+- [x] Create ContactReappearancePrompt component (duplicate detection banner)
+- [x] Wire VaultDialog into People.tsx via trash icon on PersonCard
+- [x] Add bulk selection mode to People.tsx with BulkVaultDialog
+- [x] Wire checkDuplicate into Add Contact form with ContactReappearancePrompt
+- [x] Write vitest tests for vault features
+- [x] Deploy with public visibility
+- [x] Push to GitHub
