@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   getPeople, getPerson, createPerson, updatePerson, getActivities, createActivity,
   vaultContact, restoreContact, makeContactPrivate, bulkVaultContacts, checkDuplicate, deletePerson,
+  getVaultedContacts, getPrivateContacts,
 } from '@/lib/api';
 import type { PersonCreate, ActivityCreate } from '@/types';
 
@@ -109,5 +110,21 @@ export function useCheckDuplicate() {
   return useMutation({
     mutationFn: (params: { phone?: string; email?: string; name?: string }) =>
       checkDuplicate(params),
+  });
+}
+
+export function useVaultedContacts() {
+  return useQuery({
+    queryKey: ['people', 'vaulted'],
+    queryFn: getVaultedContacts,
+    staleTime: 30_000,
+  });
+}
+
+export function usePrivateContacts() {
+  return useQuery({
+    queryKey: ['people', 'private'],
+    queryFn: getPrivateContacts,
+    staleTime: 30_000,
   });
 }

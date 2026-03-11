@@ -44,11 +44,12 @@ export function PersonCard({
   return (
     <div
       className={cn(
-        'w-full text-left px-4 py-3 rounded-xl border transition-all group',
+        'relate-card w-full text-left px-4 py-3 transition-all group',
         selected
-          ? 'bg-white border-emerald-200 shadow-sm'
-          : 'bg-white/60 border-transparent hover:bg-white hover:border-gray-200'
+          ? 'shadow-md'
+          : 'hover:shadow-md'
       )}
+      style={selected ? { borderColor: '#6FAF8F' } : undefined}
     >
       <div className="flex items-start gap-3">
         {/* Checkbox in selection mode */}
@@ -67,7 +68,7 @@ export function PersonCard({
         <button onClick={onClick} className="flex items-start gap-3 flex-1 min-w-0 text-left">
           {/* Avatar with tier indicator */}
           <div className="relative shrink-0">
-            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-sm font-semibold text-gray-600">
+            <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold text-gray-600" style={{ backgroundColor: 'rgba(111,175,143,0.12)' }}>
               {initials}
             </div>
             {person.tier && (

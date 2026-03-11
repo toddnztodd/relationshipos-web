@@ -80,3 +80,20 @@
 - [x] Write vitest tests for vault features
 - [x] Deploy with public visibility
 - [x] Push to GitHub
+
+## UI Alignment + Voice Vault + Mic Position
+- [x] Apply Relate visual tokens globally (paper bg, #6FAF8F accent, card styles)
+- [x] Update AppShell/Sidebar with aligned tokens
+- [x] Update Dashboard cards with aligned tokens
+- [x] Update People/PersonCard with aligned tokens
+- [x] Update Properties/PropertyDetailPanel with aligned tokens
+- [x] Update dialogs/modals with aligned tokens
+- [x] Update SignalCard with aligned tokens
+- [x] Reposition floating mic to bottom-center fixed
+- [x] Add voice recording to VaultDialog vault note
+- [x] Add Contacts/Vault/Private tabs to People.tsx
+- [x] Fetch vaulted contacts for Vault tab
+- [x] Fetch private contacts for Private tab
+- [x] Write vitest tests
+- [x] Deploy with public visibility
+- [x] Push to GitHub

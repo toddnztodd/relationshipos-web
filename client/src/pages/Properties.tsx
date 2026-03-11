@@ -49,7 +49,8 @@ export default function Properties() {
           placeholder="Search properties…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-200 bg-white text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 transition-colors"
+          className="w-full pl-9 pr-3 py-2 rounded-lg border bg-white text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:border-transparent transition-colors"
+          style={{ borderColor: '#ECEAE5' }}
         />
       </div>
 
@@ -70,7 +71,7 @@ export default function Properties() {
           </p>
         </div>
       ) : (
-        <div className="space-y-1">
+        <div className="space-y-2">
           {filtered.map((property) => (
             <PropertyCard
               key={property.id}
@@ -89,10 +90,10 @@ function PropertyCard({ property, onClick }: { property: Property; onClick: () =
   return (
     <button
       onClick={onClick}
-      className="w-full text-left px-4 py-3 rounded-xl border bg-white/60 border-transparent hover:bg-white hover:border-gray-200 transition-all"
+      className="relate-card w-full text-left px-4 py-3 hover:shadow-md transition-all"
     >
       <div className="flex items-start gap-3">
-        <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+        <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'rgba(59,130,246,0.10)' }}>
           <Home className="w-5 h-5 text-blue-500" />
         </div>
         <div className="flex-1 min-w-0">
@@ -125,12 +126,12 @@ function PropertyCard({ property, onClick }: { property: Property; onClick: () =
               </span>
             )}
             {property.sellability_label && (
-              <span className="px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 text-[10px]">
+              <span className="px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 text-[10px]">
                 {property.sellability_label}
               </span>
             )}
             {property.appraisal_stage && (
-              <span className="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-600 text-[10px]">
+              <span className="px-1.5 py-0.5 rounded-full text-[10px]" style={{ backgroundColor: 'rgba(111,175,143,0.12)', color: '#4a8a6a' }}>
                 {property.appraisal_stage}
               </span>
             )}
@@ -149,7 +150,7 @@ function PropertyDetailPanel({ property, onBack }: { property: Property; onBack:
 
   return (
     <div className="h-full overflow-auto">
-      <div className="sticky top-0 bg-white/80 backdrop-blur-sm border-b border-gray-100 px-6 py-4 z-10">
+      <div className="sticky top-0 backdrop-blur-sm px-6 py-4 z-10" style={{ background: 'rgba(248,247,244,0.9)', borderBottom: '1px solid #ECEAE5' }}>
         <button
           onClick={onBack}
           className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 transition-colors mb-3"
@@ -166,10 +167,10 @@ function PropertyDetailPanel({ property, onBack }: { property: Property; onBack:
         )}
       </div>
 
-      <div className="px-6 py-4 space-y-6">
+      <div className="px-6 py-4 space-y-4">
         {/* Property Intelligence */}
-        <div>
-          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Property Intelligence</h3>
+        <div className="relate-card p-4">
+          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Property Intelligence</h3>
           <div className="grid grid-cols-2 gap-3">
             {property.bedrooms != null && (
               <InfoTile icon={Bed} label="Bedrooms" value={String(property.bedrooms)} />
@@ -194,27 +195,25 @@ function PropertyDetailPanel({ property, onBack }: { property: Property; onBack:
 
         {/* Sellability */}
         {property.sellability_score != null && (
-          <div>
-            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Sellability</h3>
-            <div className="bg-gray-50 rounded-lg p-3">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-sm font-medium text-gray-700">
-                  {property.sellability_label || 'Score'}
-                </span>
-                <span className="text-xs text-gray-500">{Math.round(property.sellability_score * 100)}%</span>
-              </div>
-              <ConfidenceBar value={property.sellability_score} />
+          <div className="relate-card p-4">
+            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Sellability</h3>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-gray-700">
+                {property.sellability_label || 'Score'}
+              </span>
+              <span className="text-xs text-gray-500">{Math.round(property.sellability_score * 100)}%</span>
             </div>
+            <ConfidenceBar value={property.sellability_score} />
           </div>
         )}
 
         {/* Owners */}
         {owners.length > 0 && (
-          <div>
-            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Owners</h3>
+          <div className="relate-card p-4">
+            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Owners</h3>
             <div className="space-y-1">
               {owners.map((o) => (
-                <div key={o.person_id} className="flex items-center gap-3 px-3 py-2 bg-gray-50 rounded-lg">
+                <div key={o.person_id} className="flex items-center gap-3 px-3 py-2 rounded-lg" style={{ backgroundColor: 'rgba(111,175,143,0.06)' }}>
                   <Users className="w-4 h-4 text-gray-400" />
                   <div>
                     <p className="text-sm font-medium text-gray-900">
@@ -230,11 +229,11 @@ function PropertyDetailPanel({ property, onBack }: { property: Property; onBack:
 
         {/* Buyer Interest */}
         {buyers.length > 0 && (
-          <div>
-            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Buyer Interest</h3>
+          <div className="relate-card p-4">
+            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Buyer Interest</h3>
             <div className="space-y-1">
               {buyers.map((b) => (
-                <div key={b.id} className="flex items-center justify-between px-3 py-2 bg-gray-50 rounded-lg">
+                <div key={b.id} className="flex items-center justify-between px-3 py-2 rounded-lg bg-gray-50">
                   <div>
                     <p className="text-sm font-medium text-gray-900">{b.person_name || `Person #${b.person_id}`}</p>
                     {b.notes && <p className="text-xs text-gray-500 mt-0.5">{b.notes}</p>}
@@ -244,7 +243,8 @@ function PropertyDetailPanel({ property, onBack }: { property: Property; onBack:
                       {[1, 2, 3, 4, 5].map((n) => (
                         <span
                           key={n}
-                          className={`w-1.5 h-4 rounded-full ${n <= b.interest_level! ? 'bg-emerald-500' : 'bg-gray-200'}`}
+                          className="w-1.5 h-4 rounded-full"
+                          style={{ backgroundColor: n <= b.interest_level! ? '#6FAF8F' : '#e5e7eb' }}
                         />
                       ))}
                     </div>
@@ -256,8 +256,8 @@ function PropertyDetailPanel({ property, onBack }: { property: Property; onBack:
         )}
 
         {/* Signals */}
-        <div>
-          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Signals</h3>
+        <div className="relate-card p-4">
+          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Signals</h3>
           {signals.length === 0 ? (
             <p className="text-xs text-gray-400 italic">No signals detected</p>
           ) : (
@@ -271,7 +271,7 @@ function PropertyDetailPanel({ property, onBack }: { property: Property; onBack:
 
         {/* Notes */}
         {property.notes && (
-          <div>
+          <div className="relate-card p-4">
             <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Notes</h3>
             <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">{property.notes}</p>
           </div>
@@ -279,13 +279,13 @@ function PropertyDetailPanel({ property, onBack }: { property: Property; onBack:
 
         {/* Tags */}
         {property.tags && property.tags.length > 0 && (
-          <div>
+          <div className="relate-card p-4">
             <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Tags</h3>
             <div className="flex flex-wrap gap-1.5">
               {property.tags.map((tag) => (
                 <span
                   key={tag}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-xs text-gray-600"
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-gray-100 text-xs text-gray-600"
                 >
                   <Tag className="w-2.5 h-2.5" />
                   {tag}
@@ -302,7 +302,7 @@ function PropertyDetailPanel({ property, onBack }: { property: Property; onBack:
 // ── Info Tile ──
 function InfoTile({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string }) {
   return (
-    <div className="bg-gray-50 rounded-lg px-3 py-2">
+    <div className="rounded-lg px-3 py-2" style={{ backgroundColor: 'rgba(111,175,143,0.06)', border: '1px solid #ECEAE5' }}>
       <div className="flex items-center gap-1.5 mb-0.5">
         <Icon className="w-3 h-3 text-gray-400" />
         <p className="text-xs text-gray-500">{label}</p>

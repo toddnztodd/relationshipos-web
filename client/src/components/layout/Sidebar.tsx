@@ -29,22 +29,33 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   return (
     <aside
       className={cn(
-        'flex flex-col h-screen bg-white border-r border-gray-200 transition-all duration-200 shrink-0',
+        'flex flex-col h-screen bg-white border-r transition-all duration-200 shrink-0',
         collapsed ? 'w-16' : 'w-56'
       )}
+      style={{ borderColor: '#ECEAE5' }}
     >
       {/* Logo area */}
-      <div className="h-14 flex items-center px-4 border-b border-gray-100">
+      <div className="h-14 flex items-center px-4" style={{ borderBottom: '1px solid #ECEAE5' }}>
         {!collapsed && (
-          <span className="text-base font-semibold tracking-tight text-gray-900">
-            Relate
-          </span>
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold" style={{ backgroundColor: '#6FAF8F' }}>
+              R
+            </div>
+            <span className="text-base font-semibold tracking-tight text-gray-900">
+              Relate
+            </span>
+          </div>
+        )}
+        {collapsed && (
+          <div className="mx-auto w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold" style={{ backgroundColor: '#6FAF8F' }}>
+            R
+          </div>
         )}
         <button
           onClick={onToggle}
           className={cn(
             'p-1.5 rounded-md hover:bg-gray-100 transition-colors text-gray-400',
-            collapsed ? 'mx-auto' : 'ml-auto'
+            collapsed ? 'hidden' : 'ml-auto'
           )}
         >
           {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
@@ -52,7 +63,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 py-2 px-2 space-y-0.5">
+      <nav className="flex-1 py-3 px-2 space-y-0.5">
         {NAV_ITEMS.map((item) => {
           const isActive =
             item.path === '/'
@@ -65,14 +76,15 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
               className={cn(
                 'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
                 isActive
-                  ? 'bg-emerald-50 text-emerald-700'
+                  ? 'text-white'
                   : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
               )}
+              style={isActive ? { backgroundColor: '#6FAF8F' } : undefined}
             >
               <item.icon
                 className={cn(
                   'w-[18px] h-[18px] shrink-0',
-                  isActive ? 'text-emerald-600' : 'text-gray-400'
+                  isActive ? 'text-white' : 'text-gray-400'
                 )}
               />
               {!collapsed && <span>{item.label}</span>}

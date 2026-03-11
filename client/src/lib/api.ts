@@ -128,6 +128,32 @@ export async function deletePerson(id: number): Promise<void> {
   await apiFetch(`/people/${id}`, { method: 'DELETE' });
 }
 
+export async function getVaultedContacts(): Promise<Person[]> {
+  try {
+    return await apiFetch('/people/vaulted');
+  } catch {
+    // Fallback: try with query param
+    try {
+      return await apiFetch('/people/?include_status=vaulted');
+    } catch {
+      return [];
+    }
+  }
+}
+
+export async function getPrivateContacts(): Promise<Person[]> {
+  try {
+    return await apiFetch('/people/private');
+  } catch {
+    // Fallback: try with query param
+    try {
+      return await apiFetch('/people/?include_status=private');
+    } catch {
+      return [];
+    }
+  }
+}
+
 // ── Activities ──
 export async function getActivities(params?: { person_id?: number; property_id?: number }): Promise<Activity[]> {
   const qs = new URLSearchParams();

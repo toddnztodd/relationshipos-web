@@ -6,7 +6,7 @@ import { HealthBadge } from '@/components/shared/HealthBadge';
 import { personDisplayName } from '@/types';
 import { detectSignals } from '@/lib/signals-api';
 import { useQueryClient } from '@tanstack/react-query';
-import { Loader2, RefreshCw, Phone, TrendingUp, Users, Home, Zap, AlertTriangle } from 'lucide-react';
+import { Loader2, RefreshCw, Phone, TrendingUp, Users, Home, Zap, AlertTriangle, BarChart3 } from 'lucide-react';
 import { Link } from 'wouter';
 
 export default function Dashboard() {
@@ -51,68 +51,44 @@ export default function Dashboard() {
           {/* Stats Row */}
           {dashboard && (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <StatCard
-                icon={Users}
-                label="Total Contacts"
-                value={dashboard.tier_breakdown.total}
-                color="emerald"
-              />
-              <StatCard
-                icon={TrendingUp}
-                label="Tier A"
-                value={dashboard.tier_breakdown.tier_a}
-                color="emerald"
-              />
-              <StatCard
-                icon={Home}
-                label="Active Listings"
-                value={dashboard.active_listings}
-                color="blue"
-              />
-              <StatCard
-                icon={AlertTriangle}
-                label="Needs Attention"
-                value={dashboard.cadence_summary.needs_attention}
-                color="amber"
-              />
+              <StatCard icon={Users} label="Total Contacts" value={dashboard.tier_breakdown.total} iconColor="#6FAF8F" iconBg="rgba(111,175,143,0.12)" />
+              <StatCard icon={TrendingUp} label="Tier A" value={dashboard.tier_breakdown.tier_a} iconColor="#10b981" iconBg="rgba(16,185,129,0.12)" />
+              <StatCard icon={Home} label="Active Listings" value={dashboard.active_listings} iconColor="#3b82f6" iconBg="rgba(59,130,246,0.12)" />
+              <StatCard icon={AlertTriangle} label="Needs Attention" value={dashboard.cadence_summary.needs_attention} iconColor="#f59e0b" iconBg="rgba(245,158,11,0.12)" />
             </div>
           )}
 
           {/* Cadence Health */}
-          {dashboard && (
-            <div className="bg-white rounded-xl border border-gray-200 p-4">
-              <h2 className="text-sm font-semibold text-gray-900 mb-3">Cadence Health</h2>
-              <div className="flex items-center gap-2 h-3 rounded-full overflow-hidden bg-gray-100">
-                {dashboard.cadence_summary.total_people > 0 && (
-                  <>
-                    <div
-                      className="h-full bg-green-500 rounded-l-full"
-                      style={{ width: `${(dashboard.cadence_summary.green / dashboard.cadence_summary.total_people) * 100}%` }}
-                    />
-                    <div
-                      className="h-full bg-amber-400"
-                      style={{ width: `${(dashboard.cadence_summary.amber / dashboard.cadence_summary.total_people) * 100}%` }}
-                    />
-                    <div
-                      className="h-full bg-red-500 rounded-r-full"
-                      style={{ width: `${(dashboard.cadence_summary.red / dashboard.cadence_summary.total_people) * 100}%` }}
-                    />
-                  </>
+          {dashboard && dashboard.cadence_summary.total_people > 0 && (
+            <div className="relate-card p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <BarChart3 className="w-4 h-4" style={{ color: '#6FAF8F' }} />
+                <h2 className="text-sm font-semibold text-gray-900">Cadence Health</h2>
+              </div>
+              <div className="flex h-3 rounded-full overflow-hidden bg-gray-100">
+                {dashboard.cadence_summary.green > 0 && (
+                  <div className="h-full bg-green-500" style={{ width: `${(dashboard.cadence_summary.green / dashboard.cadence_summary.total_people) * 100}%` }} />
+                )}
+                {dashboard.cadence_summary.amber > 0 && (
+                  <div className="h-full bg-amber-400" style={{ width: `${(dashboard.cadence_summary.amber / dashboard.cadence_summary.total_people) * 100}%` }} />
+                )}
+                {dashboard.cadence_summary.red > 0 && (
+                  <div className="h-full bg-red-500" style={{ width: `${(dashboard.cadence_summary.red / dashboard.cadence_summary.total_people) * 100}%` }} />
                 )}
               </div>
               <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500" /> Green: {dashboard.cadence_summary.green}</span>
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-400" /> Amber: {dashboard.cadence_summary.amber}</span>
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-500" /> Red: {dashboard.cadence_summary.red}</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500" />{dashboard.cadence_summary.green} healthy</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-400" />{dashboard.cadence_summary.amber} at risk</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-500" />{dashboard.cadence_summary.red} overdue</span>
               </div>
             </div>
           )}
 
           {/* Signals Section */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <div className="relate-card p-4">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <Zap className="w-4 h-4 text-amber-500" />
+                <Zap className="w-4 h-4" style={{ color: '#6FAF8F' }} />
                 <h2 className="text-sm font-semibold text-gray-900">Opportunity Signals</h2>
               </div>
               <button
@@ -142,8 +118,11 @@ export default function Dashboard() {
           </div>
 
           {/* Next Best Contacts */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
-            <h2 className="text-sm font-semibold text-gray-900 mb-3">Next Best Contacts</h2>
+          <div className="relate-card p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Phone className="w-4 h-4" style={{ color: '#6FAF8F' }} />
+              <h2 className="text-sm font-semibold text-gray-900">Next Best Contacts</h2>
+            </div>
             {nbLoading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
@@ -156,7 +135,7 @@ export default function Dashboard() {
                   <Link key={c.id} href={`/people/${c.id}`}>
                     <div className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-semibold text-gray-600 shrink-0">
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold text-gray-600 shrink-0" style={{ backgroundColor: 'rgba(111,175,143,0.12)' }}>
                           {c.first_name.charAt(0)}
                         </div>
                         <div className="min-w-0">
@@ -179,7 +158,7 @@ export default function Dashboard() {
 
           {/* A-Tier Drifting */}
           {dashboard && dashboard.a_tier_drifting.length > 0 && (
-            <div className="bg-white rounded-xl border border-red-100 p-4">
+            <div className="relate-card p-4" style={{ borderColor: 'rgba(239,68,68,0.15)' }}>
               <h2 className="text-sm font-semibold text-red-700 mb-3">A-Tier Drifting</h2>
               <div className="space-y-1">
                 {dashboard.a_tier_drifting.map((p) => (
@@ -203,14 +182,14 @@ export default function Dashboard() {
 
           {/* Briefing Contacts */}
           {briefing && briefing.contacts.length > 0 && (
-            <div className="bg-white rounded-xl border border-gray-200 p-4">
+            <div className="relate-card p-4">
               <h2 className="text-sm font-semibold text-gray-900 mb-3">Today's Briefing</h2>
               <div className="space-y-1">
                 {briefing.contacts.slice(0, 5).map((c) => (
                   <Link key={c.id} href={`/people/${c.id}`}>
                     <div className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-semibold text-gray-600 shrink-0">
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold text-gray-600 shrink-0" style={{ backgroundColor: 'rgba(111,175,143,0.12)' }}>
                           {c.first_name.charAt(0)}
                         </div>
                         <div className="min-w-0">
@@ -234,22 +213,18 @@ export default function Dashboard() {
   );
 }
 
-function StatCard({ icon: Icon, label, value, color }: {
+function StatCard({ icon: Icon, label, value, iconColor, iconBg }: {
   icon: React.ElementType;
   label: string;
   value: number;
-  color: 'emerald' | 'blue' | 'amber';
+  iconColor: string;
+  iconBg: string;
 }) {
-  const colorMap = {
-    emerald: 'bg-emerald-50 text-emerald-600',
-    blue: 'bg-blue-50 text-blue-600',
-    amber: 'bg-amber-50 text-amber-600',
-  };
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-3">
+    <div className="relate-card p-3">
       <div className="flex items-center gap-2 mb-1">
-        <div className={`w-6 h-6 rounded-md flex items-center justify-center ${colorMap[color]}`}>
-          <Icon className="w-3.5 h-3.5" />
+        <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: iconBg }}>
+          <Icon className="w-3.5 h-3.5" style={{ color: iconColor }} />
         </div>
         <span className="text-xs text-gray-500">{label}</span>
       </div>
