@@ -203,7 +203,7 @@ export async function parseVoiceProperty(transcription: string): Promise<Partial
 // ── Checklists ──
 export async function getPropertyChecklist(propertyId: number): Promise<Checklist | null> {
   try {
-    return await apiFetch(`/properties/${propertyId}/checklist`);
+    return await apiFetch(`/properties/${propertyId}/listing-checklist`);
   } catch (e: any) {
     if (e?.message?.includes('404')) return null;
     return null;
@@ -211,7 +211,7 @@ export async function getPropertyChecklist(propertyId: number): Promise<Checklis
 }
 
 export async function createChecklist(propertyId: number, saleMethod: string): Promise<Checklist> {
-  return apiFetch(`/properties/${propertyId}/checklist`, {
+  return apiFetch(`/properties/${propertyId}/listing-checklist`, {
     method: 'POST',
     body: JSON.stringify({ sale_method: saleMethod }),
   });
@@ -221,7 +221,7 @@ export async function updateChecklistItem(
   itemId: number,
   updates: { is_complete?: boolean; due_date?: string; note?: string },
 ): Promise<ChecklistItem> {
-  return apiFetch(`/checklist-items/${itemId}`, {
+  return apiFetch(`/checklist-items-v2/${itemId}`, {
     method: 'PATCH',
     body: JSON.stringify(updates),
   });

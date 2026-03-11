@@ -5,22 +5,22 @@ const API_BASE = 'https://relationshipos-api.onrender.com/api/v1';
 describe('Checklist API endpoints', () => {
   it('builds correct GET checklist URL', () => {
     const propertyId = 42;
-    expect(`${API_BASE}/properties/${propertyId}/checklist`).toBe(
-      'https://relationshipos-api.onrender.com/api/v1/properties/42/checklist',
+    expect(`${API_BASE}/properties/${propertyId}/listing-checklist`).toBe(
+      'https://relationshipos-api.onrender.com/api/v1/properties/42/listing-checklist',
     );
   });
 
   it('builds correct POST create checklist URL', () => {
     const propertyId = 7;
-    expect(`${API_BASE}/properties/${propertyId}/checklist`).toBe(
-      'https://relationshipos-api.onrender.com/api/v1/properties/7/checklist',
+    expect(`${API_BASE}/properties/${propertyId}/listing-checklist`).toBe(
+      'https://relationshipos-api.onrender.com/api/v1/properties/7/listing-checklist',
     );
   });
 
   it('builds correct PATCH item URL', () => {
     const itemId = 123;
-    expect(`${API_BASE}/checklist-items/${itemId}`).toBe(
-      'https://relationshipos-api.onrender.com/api/v1/checklist-items/123',
+    expect(`${API_BASE}/checklist-items-v2/${itemId}`).toBe(
+      'https://relationshipos-api.onrender.com/api/v1/checklist-items-v2/123',
     );
   });
 
