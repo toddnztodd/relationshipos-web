@@ -72,7 +72,13 @@ export function useUpdateProperty() {
 export function useAddBuyerInterest() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ propertyId, data }: { propertyId: number; data: { person_id?: number | null; person_name?: string | null; interest_level?: number | null; notes?: string | null; status?: string | null } }) =>
+    mutationFn: ({ propertyId, data }: { propertyId: number; data: {
+      person_id?: number | null; person_name?: string | null; interest_level?: number | null;
+      notes?: string | null; status?: string | null;
+      price_min?: number; price_max?: number; bedrooms_min?: number; bathrooms_min?: number;
+      land_size_min?: number; preferred_suburbs?: string[]; property_type_pref?: string;
+      special_features?: string[];
+    } }) =>
       addBuyerInterest(propertyId, data),
     onSuccess: (_data, vars) => {
       qc.invalidateQueries({ queryKey: ['properties', vars.propertyId, 'buyer-interest'] });

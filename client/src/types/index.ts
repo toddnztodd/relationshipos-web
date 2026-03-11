@@ -469,3 +469,19 @@ export interface FollowUpTask {
   due_date?: string;
   is_completed: boolean;
 }
+
+// ── Buyer–Property Match Engine ──
+export interface BuyerMatch {
+  property: Property;
+  score: number;
+  score_pct: number;
+  reasons: string[];
+}
+
+export interface PropertyBuyerMatch {
+  buyer_interest: BuyerInterest;
+  person: Person;
+  score: number;
+  score_pct: number;
+  reasons: string[];
+}

@@ -150,3 +150,13 @@
 - [x] /door-knock route in App.tsx
 - [x] Entry point on Territory detail page
 - [x] Tests for door knock features
+
+## Buyer–Property Match Engine (March 2026)
+- [x] BuyerMatch and PropertyBuyerMatch types added to types/index.ts
+- [x] Match engine API functions added to lib/api.ts
+- [x] MatchCard shared component
+- [x] Buyer preference fields in buyer interest form (collapsible section)
+- [x] Matching Buyers section on Property Detail
+- [x] Matching Properties section on Person Detail
+- [x] Run Match Engine button on Dashboard signals section
+- [x] Tests for match engine features

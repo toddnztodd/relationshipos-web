@@ -196,7 +196,13 @@ export async function getPropertyOwners(id: number | string): Promise<PropertyOw
 // ── Buyer Interest ──
 export async function addBuyerInterest(
   propertyId: number | string,
-  data: { person_id?: number | null; person_name?: string | null; interest_level?: number | null; notes?: string | null; status?: string | null },
+  data: {
+    person_id?: number | null; person_name?: string | null; interest_level?: number | null;
+    notes?: string | null; status?: string | null;
+    price_min?: number; price_max?: number; bedrooms_min?: number; bathrooms_min?: number;
+    land_size_min?: number; preferred_suburbs?: string[]; property_type_pref?: string;
+    special_features?: string[];
+  },
 ): Promise<BuyerInterest> {
   return apiFetch(`/properties/${propertyId}/buyer-interest`, {
     method: 'POST',
@@ -399,4 +405,17 @@ export async function createFollowUpTask(data: any): Promise<any> {
 
 export async function updateFollowUpTask(id: string, data: any): Promise<any> {
   return apiFetch(`/follow-up-tasks/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+}
+
+// ── Buyer–Property Match Engine ──
+export async function getBuyerMatches(buyerInterestId: string | number): Promise<any[]> {
+  return apiFetch(`/buyers/${buyerInterestId}/matches`);
+}
+
+export async function getPropertyBuyerMatches(propertyId: string | number): Promise<any[]> {
+  return apiFetch(`/properties/${propertyId}/buyer-matches`);
+}
+
+export async function runMatchEngine(): Promise<any> {
+  return apiFetch('/match-engine/run', { method: 'POST' });
 }

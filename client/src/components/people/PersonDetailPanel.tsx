@@ -1,10 +1,15 @@
+import { useState, useEffect } from 'react';
+import { useLocation } from 'wouter';
 import type { Person } from '@/types';
 import { personDisplayName } from '@/types';
 import { usePersonActivities } from '@/hooks/usePeople';
 import { usePersonSignals } from '@/hooks/useSignals';
 import { HealthBadge } from '@/components/shared/HealthBadge';
 import { SignalCard } from '@/components/shared/SignalCard';
+import { MatchCard } from '@/components/shared/MatchCard';
 import { RelationshipTimeline } from './RelationshipTimeline';
+import { getPropertyBuyerInterest } from '@/lib/api';
+import { getBuyerMatches } from '@/lib/api';
 import { Phone, Mail, Tag, ArrowLeft, Pencil } from 'lucide-react';
 
 const TIER_LABELS: Record<string, string> = {
@@ -157,12 +162,92 @@ export function PersonDetailPanel({ person, onBack, onEdit }: PersonDetailPanelP
           </div>
         )}
 
+        {/* Matching Properties */}
+        <MatchingPropertiesSection personId={person.id} />
+
         {/* Activity Timeline */}
         <div className="relate-card p-4">
           <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Activity</h3>
           <RelationshipTimeline activities={activities} loading={activitiesLoading} />
         </div>
       </div>
+    </div>
+  );
+}
+
+function MatchingPropertiesSection({ personId }: { personId: number }) {
+  const [matches, setMatches] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+
+    // First get buyer interests for this person, then fetch matches for each
+    getPropertyBuyerInterest(personId)
+      .then(async (interests: any[]) => {
+        if (cancelled) return;
+        // Only show for interests with stage >= interested
+        const qualifying = (interests || []).filter((bi: any) => {
+          const stage = bi.status || bi.stage;
+          return ['interested', 'hot', 'offer', 'purchased'].includes(stage);
+        });
+        if (qualifying.length === 0) {
+          setMatches([]);
+          setLoading(false);
+          return;
+        }
+        const allMatches: any[] = [];
+        for (const bi of qualifying) {
+          try {
+            const m = await getBuyerMatches(bi.id);
+            if (Array.isArray(m)) allMatches.push(...m);
+          } catch { /* skip */ }
+        }
+        if (!cancelled) setMatches(allMatches);
+      })
+      .catch(() => { if (!cancelled) setMatches([]); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [personId]);
+
+  if (!loading && matches.length === 0) return null;
+
+  return (
+    <div className="relate-card p-4">
+      <div className="flex items-center gap-2 mb-3">
+        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Matching Properties</h3>
+        {matches.length > 0 && (
+          <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold text-white" style={{ backgroundColor: '#6FAF8F' }}>
+            {matches.length}
+          </span>
+        )}
+      </div>
+      {loading ? (
+        <div className="flex items-center gap-2 py-4">
+          <div className="w-8 h-8 rounded-full bg-gray-100 animate-pulse" />
+          <div className="flex-1 space-y-1.5">
+            <div className="h-3 bg-gray-100 rounded animate-pulse w-2/3" />
+            <div className="h-2 bg-gray-100 rounded animate-pulse w-1/3" />
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {matches.slice(0, 5).map((m: any, i: number) => (
+            <MatchCard
+              key={m.property?.id || i}
+              type="property"
+              name={m.property?.address || 'Unknown property'}
+              score={m.score_pct ?? m.score ?? 0}
+              reasons={m.reasons || []}
+              onClick={() => {
+                if (m.property?.id) setLocation(`/properties`);
+              }}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

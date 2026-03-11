@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useLocation } from 'wouter';
 import { useProperties, usePropertyBuyerInterest, usePropertyOwners, useAddBuyerInterest, useUpdateBuyerInterest, useDeleteBuyerInterest, useLinkOwner, useUnlinkOwner } from '@/hooks/useProperties';
 import { useTerritories } from '@/hooks/useTerritories';
 import { usePeople } from '@/hooks/usePeople';
@@ -6,6 +7,8 @@ import { personDisplayName } from '@/types';
 import { usePropertySignals } from '@/hooks/useSignals';
 import { SignalCard } from '@/components/shared/SignalCard';
 import { ConfidenceBar } from '@/components/shared/ConfidenceBar';
+import { MatchCard } from '@/components/shared/MatchCard';
+import { getPropertyBuyerMatches } from '@/lib/api';
 import type { Property } from '@/types';
 import { Search, Home, Loader2, ArrowLeft, MapPin, Bed, Bath, DollarSign, Tag, Users, Plus, X, ChevronDown, ChevronRight, Pencil, Flag } from 'lucide-react';
 import { useCreateProperty } from '@/hooks/useProperties';
@@ -197,7 +200,14 @@ function PropertyDetailPanel({ property, onBack, onEdit }: { property: Property;
   const updateBuyer = useUpdateBuyerInterest(property.id);
   const deleteBuyer = useDeleteBuyerInterest(property.id);
   const [showAddBuyer, setShowAddBuyer] = useState(false);
-  const [newBuyer, setNewBuyer] = useState({ person_name: '', status: 'seen', notes: '' });
+  const [newBuyer, setNewBuyer] = useState({
+    person_name: '', status: 'seen', notes: '',
+    price_min: '', price_max: '', bedrooms_min: '', bathrooms_min: '',
+    land_size_min: '', preferred_suburbs: [] as string[], property_type_pref: '',
+    special_features: [] as string[],
+  });
+  const [showPrefs, setShowPrefs] = useState(false);
+  const [suburbInput, setSuburbInput] = useState('');
   const [editingBuyerId, setEditingBuyerId] = useState<number | null>(null);
   const [editBuyerData, setEditBuyerData] = useState({ status: '', notes: '' });
 
@@ -413,15 +423,109 @@ function PropertyDetailPanel({ property, onBack, onEdit }: { property: Property;
                 className="w-full px-3 py-1.5 rounded-lg border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#6FAF8F]/30"
                 style={{ borderColor: '#ECEAE5' }}
               />
+
+              {/* Collapsible Buyer Preferences */}
+              <button
+                type="button"
+                onClick={() => setShowPrefs((v) => !v)}
+                className="flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-gray-700 transition-colors py-1"
+              >
+                {showPrefs ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                Buyer Preferences
+              </button>
+              {showPrefs && (
+                <div className="space-y-2 pl-1">
+                  <div className="grid grid-cols-2 gap-2">
+                    <input type="number" placeholder="Price Min (NZD)" value={newBuyer.price_min} onChange={(e) => setNewBuyer((p) => ({ ...p, price_min: e.target.value }))} className="px-3 py-1.5 rounded-lg border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#6FAF8F]/30" style={{ borderColor: '#ECEAE5' }} />
+                    <input type="number" placeholder="Price Max (NZD)" value={newBuyer.price_max} onChange={(e) => setNewBuyer((p) => ({ ...p, price_max: e.target.value }))} className="px-3 py-1.5 rounded-lg border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#6FAF8F]/30" style={{ borderColor: '#ECEAE5' }} />
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <select value={newBuyer.bedrooms_min} onChange={(e) => setNewBuyer((p) => ({ ...p, bedrooms_min: e.target.value }))} className="px-3 py-1.5 rounded-lg border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#6FAF8F]/30" style={{ borderColor: '#ECEAE5' }}>
+                      <option value="">Beds</option>
+                      {[1,2,3,4,5,6].map((n) => <option key={n} value={n}>{n}+</option>)}
+                    </select>
+                    <select value={newBuyer.bathrooms_min} onChange={(e) => setNewBuyer((p) => ({ ...p, bathrooms_min: e.target.value }))} className="px-3 py-1.5 rounded-lg border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#6FAF8F]/30" style={{ borderColor: '#ECEAE5' }}>
+                      <option value="">Baths</option>
+                      {[1,2,3,4].map((n) => <option key={n} value={n}>{n}+</option>)}
+                    </select>
+                    <input type="number" placeholder="Land m²" value={newBuyer.land_size_min} onChange={(e) => setNewBuyer((p) => ({ ...p, land_size_min: e.target.value }))} className="px-3 py-1.5 rounded-lg border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#6FAF8F]/30" style={{ borderColor: '#ECEAE5' }} />
+                  </div>
+                  <select value={newBuyer.property_type_pref} onChange={(e) => setNewBuyer((p) => ({ ...p, property_type_pref: e.target.value }))} className="w-full px-3 py-1.5 rounded-lg border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#6FAF8F]/30" style={{ borderColor: '#ECEAE5' }}>
+                    <option value="">Property Type</option>
+                    {['house','apartment','townhouse','section','lifestyle'].map((t) => <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>)}
+                  </select>
+                  {/* Preferred Suburbs tag input */}
+                  <div>
+                    <div className="flex flex-wrap gap-1 mb-1">
+                      {newBuyer.preferred_suburbs.map((s, i) => (
+                        <span key={i} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700">
+                          {s}
+                          <button type="button" onClick={() => setNewBuyer((p) => ({ ...p, preferred_suburbs: p.preferred_suburbs.filter((_, j) => j !== i) }))} className="hover:text-red-500">&times;</button>
+                        </span>
+                      ))}
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Type suburb, press Enter"
+                      value={suburbInput}
+                      onChange={(e) => setSuburbInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && suburbInput.trim()) {
+                          e.preventDefault();
+                          setNewBuyer((p) => ({ ...p, preferred_suburbs: [...p.preferred_suburbs, suburbInput.trim()] }));
+                          setSuburbInput('');
+                        }
+                      }}
+                      className="w-full px-3 py-1.5 rounded-lg border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#6FAF8F]/30"
+                      style={{ borderColor: '#ECEAE5' }}
+                    />
+                  </div>
+                  {/* Special Features checkboxes */}
+                  <div className="grid grid-cols-2 gap-1">
+                    {['Pool','School Zone','Double Garage','Sea Views','Single Level','New Build'].map((feat) => (
+                      <label key={feat} className="flex items-center gap-1.5 text-xs text-gray-600 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={newBuyer.special_features.includes(feat)}
+                          onChange={(e) => {
+                            setNewBuyer((p) => ({
+                              ...p,
+                              special_features: e.target.checked
+                                ? [...p.special_features, feat]
+                                : p.special_features.filter((f) => f !== feat),
+                            }));
+                          }}
+                          className="rounded border-gray-300 text-[#6FAF8F] focus:ring-[#6FAF8F]"
+                        />
+                        {feat}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="flex gap-2">
                 <button
                   onClick={async () => {
                     if (!newBuyer.person_name.trim()) return;
                     await addBuyer.mutateAsync({
                       propertyId: property.id,
-                      data: { person_name: newBuyer.person_name.trim(), status: newBuyer.status, notes: newBuyer.notes.trim() || null },
+                      data: {
+                        person_name: newBuyer.person_name.trim(),
+                        status: newBuyer.status,
+                        notes: newBuyer.notes.trim() || null,
+                        price_min: newBuyer.price_min ? Number(newBuyer.price_min) : undefined,
+                        price_max: newBuyer.price_max ? Number(newBuyer.price_max) : undefined,
+                        bedrooms_min: newBuyer.bedrooms_min ? Number(newBuyer.bedrooms_min) : undefined,
+                        bathrooms_min: newBuyer.bathrooms_min ? Number(newBuyer.bathrooms_min) : undefined,
+                        land_size_min: newBuyer.land_size_min ? Number(newBuyer.land_size_min) : undefined,
+                        preferred_suburbs: newBuyer.preferred_suburbs.length ? newBuyer.preferred_suburbs : undefined,
+                        property_type_pref: newBuyer.property_type_pref || undefined,
+                        special_features: newBuyer.special_features.length ? newBuyer.special_features : undefined,
+                      },
                     });
-                    setNewBuyer({ person_name: '', status: 'seen', notes: '' }); setShowAddBuyer(false);
+                    setNewBuyer({ person_name: '', status: 'seen', notes: '', price_min: '', price_max: '', bedrooms_min: '', bathrooms_min: '', land_size_min: '', preferred_suburbs: [], property_type_pref: '', special_features: [] });
+                    setShowPrefs(false); setSuburbInput(''); setShowAddBuyer(false);
                   }}
                   disabled={!newBuyer.person_name.trim() || addBuyer.isPending}
                   className="px-3 py-1.5 rounded-lg text-xs font-medium text-white disabled:opacity-50"
@@ -429,7 +533,7 @@ function PropertyDetailPanel({ property, onBack, onEdit }: { property: Property;
                 >
                   Add Buyer
                 </button>
-                <button onClick={() => { setShowAddBuyer(false); setNewBuyer({ person_name: '', status: 'seen', notes: '' }); }} className="px-3 py-1.5 rounded-lg text-xs text-gray-500 hover:bg-gray-100">
+                <button onClick={() => { setShowAddBuyer(false); setNewBuyer({ person_name: '', status: 'seen', notes: '', price_min: '', price_max: '', bedrooms_min: '', bathrooms_min: '', land_size_min: '', preferred_suburbs: [], property_type_pref: '', special_features: [] }); setShowPrefs(false); setSuburbInput(''); }} className="px-3 py-1.5 rounded-lg text-xs text-gray-500 hover:bg-gray-100">
                   Cancel
                 </button>
               </div>
@@ -526,6 +630,9 @@ function PropertyDetailPanel({ property, onBack, onEdit }: { property: Property;
             </div>
           )}
         </div>
+
+        {/* Matching Buyers */}
+        <MatchingBuyersSection propertyId={property.id} />
 
         {/* Territories */}
         <TerritoryChips propertyId={property.id} />
@@ -926,6 +1033,61 @@ function TerritoryChips({ propertyId }: { propertyId: number }) {
           );
         })}
       </div>
+    </div>
+  );
+}
+
+function MatchingBuyersSection({ propertyId }: { propertyId: number }) {
+  const [matches, setMatches] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    getPropertyBuyerMatches(propertyId)
+      .then((data) => { if (!cancelled) setMatches(Array.isArray(data) ? data : []); })
+      .catch(() => { if (!cancelled) setMatches([]); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [propertyId]);
+
+  return (
+    <div className="relate-card p-4">
+      <div className="flex items-center gap-2 mb-3">
+        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Matching Buyers</h3>
+        {matches.length > 0 && (
+          <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold text-white" style={{ backgroundColor: '#6FAF8F' }}>
+            {matches.length}
+          </span>
+        )}
+      </div>
+      {loading ? (
+        <div className="flex items-center gap-2 py-4">
+          <div className="w-8 h-8 rounded-full bg-gray-100 animate-pulse" />
+          <div className="flex-1 space-y-1.5">
+            <div className="h-3 bg-gray-100 rounded animate-pulse w-2/3" />
+            <div className="h-2 bg-gray-100 rounded animate-pulse w-1/3" />
+          </div>
+        </div>
+      ) : matches.length === 0 ? (
+        <p className="text-xs text-gray-400 italic">No matching buyers yet</p>
+      ) : (
+        <div className="space-y-2">
+          {matches.slice(0, 5).map((m: any, i: number) => (
+            <MatchCard
+              key={m.person?.id || i}
+              type="buyer"
+              name={m.person ? `${m.person.first_name} ${m.person.last_name || ''}`.trim() : (m.buyer_interest?.person_name || 'Unknown')}
+              score={m.score_pct ?? m.score ?? 0}
+              reasons={m.reasons || []}
+              onClick={() => {
+                if (m.person?.id) setLocation(`/people/${m.person.id}`);
+              }}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

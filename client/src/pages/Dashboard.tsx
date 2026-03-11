@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useBriefing, useDashboard, useNextBestContacts } from '@/hooks/useBriefing';
-import { getFollowUpTasks, updateFollowUpTask } from '@/lib/api';
+import { getFollowUpTasks, updateFollowUpTask, runMatchEngine } from '@/lib/api';
 import { useSignals } from '@/hooks/useSignals';
 import { SignalCard } from '@/components/shared/SignalCard';
 import { HealthBadge } from '@/components/shared/HealthBadge';
@@ -18,6 +18,8 @@ export default function Dashboard() {
   const [detecting, setDetecting] = useState(false);
   const qc = useQueryClient();
 
+  const [matchRunning, setMatchRunning] = useState(false);
+
   const handleDetect = useCallback(async () => {
     setDetecting(true);
     try {
@@ -26,6 +28,15 @@ export default function Dashboard() {
       qc.invalidateQueries({ queryKey: ['briefing'] });
     } catch { /* silent */ }
     setDetecting(false);
+  }, [qc]);
+
+  const handleRunMatchEngine = useCallback(async () => {
+    setMatchRunning(true);
+    try {
+      await runMatchEngine();
+      qc.invalidateQueries({ queryKey: ['signals'] });
+    } catch { /* silent */ }
+    setMatchRunning(false);
   }, [qc]);
 
   const topSignals = signals
@@ -92,14 +103,25 @@ export default function Dashboard() {
                 <Zap className="w-4 h-4" style={{ color: '#6FAF8F' }} />
                 <h2 className="text-sm font-semibold text-gray-900">Opportunity Signals</h2>
               </div>
-              <button
-                onClick={handleDetect}
-                disabled={detecting}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-gray-600 hover:bg-gray-100 transition-colors disabled:opacity-50"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${detecting ? 'animate-spin' : ''}`} />
-                {detecting ? 'Scanning…' : 'Refresh'}
-              </button>
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={handleRunMatchEngine}
+                  disabled={matchRunning}
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-white transition-colors disabled:opacity-50"
+                  style={{ backgroundColor: '#6FAF8F' }}
+                >
+                  <TrendingUp className={`w-3.5 h-3.5 ${matchRunning ? 'animate-pulse' : ''}`} />
+                  {matchRunning ? 'Matching…' : 'Match'}
+                </button>
+                <button
+                  onClick={handleDetect}
+                  disabled={detecting}
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-gray-600 hover:bg-gray-100 transition-colors disabled:opacity-50"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${detecting ? 'animate-spin' : ''}`} />
+                  {detecting ? 'Scanning…' : 'Refresh'}
+                </button>
+              </div>
             </div>
             {sigLoading ? (
               <div className="flex items-center justify-center py-8">
