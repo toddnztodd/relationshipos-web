@@ -160,3 +160,13 @@
 - [x] Matching Properties section on Person Detail
 - [x] Run Match Engine button on Dashboard signals section
 - [x] Tests for match engine features
+
+## Referral Program Tracking (March 2026)
+- [x] Referral types (ReferralStatus, RewardStatus, Referral) added to types/index.ts
+- [x] Person type extended with referral fields
+- [x] Referral API functions added to lib/api.ts
+- [x] Referral section on Person Detail (4 states: not registered, member, referred, both)
+- [x] Referred-by field in Add Contact form
+- [x] Referred-by field in Edit Contact form
+- [x] Referrals tab on People page with filter chips
+- [x] Tests for referral features

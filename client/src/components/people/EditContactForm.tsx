@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import type { Person, PersonCreate } from '@/types';
-import { useUpdatePerson } from '@/hooks/usePeople';
+import { personDisplayName } from '@/types';
+import { useUpdatePerson, usePeople } from '@/hooks/usePeople';
+import { createReferral } from '@/lib/api';
 import { VoiceRecorder } from '@/components/shared/VoiceRecorder';
 import { X, Loader2 } from 'lucide-react';
 
@@ -24,6 +26,16 @@ export function EditContactForm({ person, onClose, onUpdated }: EditContactFormP
     nickname: person.nickname ?? '',
   });
   const [submitting, setSubmitting] = useState(false);
+  const [referredById, setReferredById] = useState<number | null>(person.referred_by_id ? Number(person.referred_by_id) : null);
+  const [referrerSearch, setReferrerSearch] = useState('');
+  const [showReferrerDropdown, setShowReferrerDropdown] = useState(false);
+  const { data: allPeople = [] } = usePeople();
+
+  const referrerMatches = useMemo(() => {
+    if (!referrerSearch.trim()) return [];
+    const q = referrerSearch.toLowerCase();
+    return allPeople.filter(p => p.id !== person.id && personDisplayName(p).toLowerCase().includes(q)).slice(0, 5);
+  }, [referrerSearch, allPeople, person.id]);
 
   function updateField(field: keyof PersonCreate, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -48,6 +60,12 @@ export function EditContactForm({ person, onClose, onUpdated }: EditContactFormP
           nickname: form.nickname?.trim() || null,
         },
       });
+      // Create referral link if newly set
+      if (referredById && !person.referred_by_id) {
+        try {
+          await createReferral({ referrer_person_id: String(referredById), referred_person_id: String(person.id) });
+        } catch { /* silent */ }
+      }
       onUpdated();
     } catch {
       // Error handled by mutation
@@ -168,6 +186,48 @@ export function EditContactForm({ person, onClose, onUpdated }: EditContactFormP
             <option value="B">B — Active</option>
             <option value="C">C — Nurture</option>
           </select>
+        </div>
+
+        {/* Referred By */}
+        <div className="relative">
+          <label className="block text-xs font-medium text-gray-600 mb-1">Referred By</label>
+          {referredById ? (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg border bg-white text-sm" style={borderStyle}>
+              <span className="flex-1 text-gray-800">{personDisplayName(allPeople.find(p => p.id === referredById) || { first_name: 'Selected' })}</span>
+              <button type="button" onClick={() => { setReferredById(null); setReferrerSearch(''); }} className="text-gray-400 hover:text-gray-600">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ) : (
+            <input
+              type="text"
+              value={referrerSearch}
+              onChange={(e) => { setReferrerSearch(e.target.value); setShowReferrerDropdown(true); }}
+              onFocus={() => setShowReferrerDropdown(true)}
+              onBlur={() => setTimeout(() => setShowReferrerDropdown(false), 200)}
+              placeholder="Search contacts\u2026"
+              className={inputCls}
+              style={borderStyle}
+            />
+          )}
+          {showReferrerDropdown && referrerMatches.length > 0 && !referredById && (
+            <div className="absolute left-0 right-0 top-full mt-1 rounded-lg shadow-lg border border-gray-200 bg-white z-20 py-1 max-h-40 overflow-auto">
+              {referrerMatches.map(p => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => { setReferredById(p.id); setReferrerSearch(''); setShowReferrerDropdown(false); }}
+                  className="w-full text-left px-3 py-1.5 text-xs hover:bg-gray-50 flex items-center gap-2"
+                >
+                  <span className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-semibold text-gray-500" style={{ backgroundColor: 'rgba(111,175,143,0.12)' }}>
+                    {p.first_name.charAt(0).toUpperCase()}
+                  </span>
+                  {personDisplayName(p)}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div>

@@ -43,6 +43,10 @@ export interface Person {
   seller_likelihood: number | null;
   perceived_value: string | null;
   tags: string[] | null;
+  referral_member?: boolean;
+  referral_reward_amount?: number;
+  referral_email_sent_at?: string;
+  referred_by_id?: string;
   created_at: string;
   updated_at: string;
 }
@@ -484,4 +488,21 @@ export interface PropertyBuyerMatch {
   score: number;
   score_pct: number;
   reasons: string[];
+}
+// ── Referral Program ──
+export type ReferralStatus = 'registered' | 'referral_received' | 'listing_secured' | 'sold' | 'closed';
+export type RewardStatus = 'none' | 'pending' | 'earned' | 'paid';
+
+export interface Referral {
+  id: string;
+  referrer_person_id: string;
+  referred_person_id: string;
+  referral_status: ReferralStatus;
+  reward_amount: number;
+  reward_status: RewardStatus;
+  reward_paid_at?: string;
+  notes?: string;
+  created_at: string;
+  referrer?: Person;
+  referred?: Person;
 }

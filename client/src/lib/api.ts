@@ -419,3 +419,25 @@ export async function getPropertyBuyerMatches(propertyId: string | number): Prom
 export async function runMatchEngine(): Promise<any> {
   return apiFetch('/match-engine/run', { method: 'POST' });
 }
+
+// ── Referral Program ──
+export async function registerReferralMember(personId: string | number, data: { reward_amount?: number } = {}): Promise<any> {
+  return apiFetch(`/people/${personId}/register-referral-member`, { method: 'POST', body: JSON.stringify(data) });
+}
+
+export async function getPersonReferrals(personId: string | number): Promise<any[]> {
+  return apiFetch(`/people/${personId}/referrals`);
+}
+
+export async function createReferral(data: { referrer_person_id: string | number; referred_person_id: string | number; notes?: string }): Promise<any> {
+  return apiFetch('/referrals', { method: 'POST', body: JSON.stringify(data) });
+}
+
+export async function updateReferral(referralId: string | number, data: any): Promise<any> {
+  return apiFetch(`/referrals/${referralId}`, { method: 'PUT', body: JSON.stringify(data) });
+}
+
+export async function getReferrals(params?: { status?: string; reward_status?: string }): Promise<any[]> {
+  const qs = params ? '?' + new URLSearchParams(params as any).toString() : '';
+  return apiFetch(`/referrals${qs}`);
+}

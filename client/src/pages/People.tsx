@@ -1,8 +1,10 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   usePeople, useCreatePerson, useRestoreContact, useCheckDuplicate,
   useVaultedContacts, usePrivateContacts,
 } from '@/hooks/usePeople';
+import { createReferral, getReferrals } from '@/lib/api';
+import type { Referral, ReferralStatus, RewardStatus } from '@/types';
 import { PersonCard } from '@/components/people/PersonCard';
 import { PersonDetailPanel } from '@/components/people/PersonDetailPanel';
 import { VaultDialog } from '@/components/people/VaultDialog';
@@ -16,7 +18,7 @@ import type { Person, Tier, PersonCreate } from '@/types';
 import { personDisplayName } from '@/types';
 
 const TIERS: (Tier | 'all')[] = ['all', 'A', 'B', 'C'];
-type PeopleTab = 'contacts' | 'vault' | 'private';
+type PeopleTab = 'contacts' | 'vault' | 'private' | 'referrals';
 
 export default function People() {
   const { data: people = [], isLoading, error } = usePeople();
@@ -169,7 +171,7 @@ export default function People() {
 
       {/* Tabs */}
       <div className="flex items-center gap-1 mb-4 p-0.5 rounded-lg bg-gray-100 w-fit">
-        {(['contacts', 'vault', 'private'] as PeopleTab[]).map((tab) => (
+        {(['contacts', 'vault', 'private', 'referrals'] as PeopleTab[]).map((tab) => (
           <button
             key={tab}
             onClick={() => {
@@ -183,7 +185,7 @@ export default function People() {
                 : { color: '#6b7280' }
             }
           >
-            {tab === 'contacts' ? 'Contacts' : tab === 'vault' ? 'Vault' : 'Private'}
+            {tab === 'contacts' ? 'Contacts' : tab === 'vault' ? 'Vault' : tab === 'private' ? 'Private' : 'Referrals'}
           </button>
         ))}
       </div>
@@ -208,6 +210,7 @@ export default function People() {
       )}
       {activeTab === 'vault' && <VaultTab />}
       {activeTab === 'private' && <PrivateTab />}
+      {activeTab === 'referrals' && <ReferralsTab />}
 
       {/* Bulk action bar */}
       {selectionMode && selectedIds.size > 0 && activeTab === 'contacts' && (
@@ -521,6 +524,10 @@ function AddContactForm({ onClose, onCreated }: { onClose: () => void; onCreated
     phone: '',
   });
   const [submitting, setSubmitting] = useState(false);
+  const [referredById, setReferredById] = useState<number | null>(null);
+  const [referrerSearch, setReferrerSearch] = useState('');
+  const [showReferrerDropdown, setShowReferrerDropdown] = useState(false);
+  const { data: allPeople = [] } = usePeople();
 
   // Duplicate detection state
   const [dupMatch, setDupMatch] = useState<Person | null>(null);
@@ -579,12 +586,18 @@ function AddContactForm({ onClose, onCreated }: { onClose: () => void; onCreated
     setDupDismissed(true);
   }
 
+  const referrerMatches = useMemo(() => {
+    if (!referrerSearch.trim()) return [];
+    const q = referrerSearch.toLowerCase();
+    return allPeople.filter(p => personDisplayName(p).toLowerCase().includes(q)).slice(0, 5);
+  }, [referrerSearch, allPeople]);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.first_name?.trim() || !form.phone?.trim()) return;
     setSubmitting(true);
     try {
-      await createPerson.mutateAsync({
+      const newPerson = await createPerson.mutateAsync({
         first_name: form.first_name.trim(),
         phone: form.phone.trim(),
         last_name: form.last_name?.trim() || null,
@@ -592,6 +605,12 @@ function AddContactForm({ onClose, onCreated }: { onClose: () => void; onCreated
         suburb: form.suburb?.trim() || null,
         notes: form.notes?.trim() || null,
       });
+      // Create referral link if referred by someone
+      if (referredById && newPerson?.id) {
+        try {
+          await createReferral({ referrer_person_id: String(referredById), referred_person_id: String(newPerson.id) });
+        } catch { /* silent */ }
+      }
       onCreated();
     } catch {
       // Error handled by mutation
@@ -702,6 +721,48 @@ function AddContactForm({ onClose, onCreated }: { onClose: () => void; onCreated
           />
         </div>
 
+        {/* Referred By */}
+        <div className="relative">
+          <label className="block text-xs font-medium text-gray-600 mb-1">Referred By</label>
+          {referredById ? (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg border bg-white text-sm" style={{ borderColor: '#ECEAE5' }}>
+              <span className="flex-1 text-gray-800">{personDisplayName(allPeople.find(p => p.id === referredById) || { first_name: 'Selected' })}</span>
+              <button type="button" onClick={() => { setReferredById(null); setReferrerSearch(''); }} className="text-gray-400 hover:text-gray-600">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ) : (
+            <input
+              type="text"
+              value={referrerSearch}
+              onChange={(e) => { setReferrerSearch(e.target.value); setShowReferrerDropdown(true); }}
+              onFocus={() => setShowReferrerDropdown(true)}
+              onBlur={() => setTimeout(() => setShowReferrerDropdown(false), 200)}
+              placeholder="Search contacts…"
+              className="w-full px-3 py-2 rounded-lg border bg-white text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#6FAF8F]/30 focus:border-[#6FAF8F] transition-colors"
+              style={{ borderColor: '#ECEAE5' }}
+            />
+          )}
+          {showReferrerDropdown && referrerMatches.length > 0 && !referredById && (
+            <div className="absolute left-0 right-0 top-full mt-1 rounded-lg shadow-lg border border-gray-200 bg-white z-20 py-1 max-h-40 overflow-auto">
+              {referrerMatches.map(p => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => { setReferredById(p.id); setReferrerSearch(''); setShowReferrerDropdown(false); }}
+                  className="w-full text-left px-3 py-1.5 text-xs hover:bg-gray-50 flex items-center gap-2"
+                >
+                  <span className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-semibold text-gray-500" style={{ backgroundColor: 'rgba(111,175,143,0.12)' }}>
+                    {p.first_name.charAt(0).toUpperCase()}
+                  </span>
+                  {personDisplayName(p)}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* Duplicate detection prompt */}
         {dupMatch && dupMatchType && !dupDismissed && (
           <ContactReappearancePrompt
@@ -723,6 +784,148 @@ function AddContactForm({ onClose, onCreated }: { onClose: () => void; onCreated
           Add Contact
         </button>
       </form>
+    </div>
+  );
+}
+
+const REFERRAL_STATUS_STYLES: Record<ReferralStatus, { bg: string; text: string; label: string }> = {
+  registered: { bg: 'rgba(156,163,175,0.15)', text: '#6b7280', label: 'Registered' },
+  referral_received: { bg: 'rgba(59,130,246,0.12)', text: '#2563eb', label: 'Referral Received' },
+  listing_secured: { bg: 'rgba(245,158,11,0.12)', text: '#d97706', label: 'Listing Secured' },
+  sold: { bg: 'rgba(111,175,143,0.15)', text: '#4a8a6a', label: 'Sold' },
+  closed: { bg: 'rgba(156,163,175,0.15)', text: '#6b7280', label: 'Closed' },
+};
+
+const REWARD_FILTERS = ['all', 'pending', 'earned', 'paid'] as const;
+type RewardFilter = typeof REWARD_FILTERS[number];
+
+function ReferralsTab() {
+  const { data: people = [] } = usePeople();
+  const [referrals, setReferrals] = useState<Referral[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [rewardFilter, setRewardFilter] = useState<RewardFilter>('all');
+
+  useEffect(() => {
+    let cancelled = false;
+    getReferrals()
+      .then(data => { if (!cancelled) setReferrals(Array.isArray(data) ? data : []); })
+      .catch(() => { if (!cancelled) setReferrals([]); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
+
+  // Build referral member list from people who have referral_member flag
+  const referralMembers = useMemo(() => {
+    return people.filter(p => p.referral_member);
+  }, [people]);
+
+  // Count referrals per member
+  const memberStats = useMemo(() => {
+    const stats = new Map<number, { count: number; pendingReward: number; earnedReward: number; paidReward: number }>();
+    referralMembers.forEach(m => stats.set(m.id, { count: 0, pendingReward: 0, earnedReward: 0, paidReward: 0 }));
+    referrals.forEach(r => {
+      const referrerId = Number(r.referrer_person_id);
+      const s = stats.get(referrerId);
+      if (s) {
+        s.count++;
+        if (r.reward_status === 'pending') s.pendingReward++;
+        else if (r.reward_status === 'earned') s.earnedReward++;
+        else if (r.reward_status === 'paid') s.paidReward++;
+      }
+    });
+    return stats;
+  }, [referralMembers, referrals]);
+
+  const filtered = useMemo(() => {
+    if (rewardFilter === 'all') return referralMembers;
+    return referralMembers.filter(m => {
+      const s = memberStats.get(m.id);
+      if (!s) return false;
+      if (rewardFilter === 'pending') return s.pendingReward > 0;
+      if (rewardFilter === 'earned') return s.earnedReward > 0;
+      if (rewardFilter === 'paid') return s.paidReward > 0;
+      return true;
+    });
+  }, [referralMembers, rewardFilter, memberStats]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      {/* Filter chips */}
+      <div className="flex items-center gap-1.5 mb-4">
+        {REWARD_FILTERS.map(f => (
+          <button
+            key={f}
+            onClick={() => setRewardFilter(f)}
+            className="px-3 py-1 rounded-full text-xs font-medium transition-colors capitalize"
+            style={
+              rewardFilter === f
+                ? { backgroundColor: '#6FAF8F', color: 'white' }
+                : { backgroundColor: 'rgba(111,175,143,0.08)', color: '#6b7280' }
+            }
+          >
+            {f === 'all' ? 'All' : f === 'pending' ? 'Pending Reward' : f === 'earned' ? 'Earned' : 'Paid'}
+          </button>
+        ))}
+      </div>
+
+      {filtered.length === 0 ? (
+        <div className="text-center py-12">
+          <Users className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+          <p className="text-sm text-gray-500">No referral members{rewardFilter !== 'all' ? ` with ${rewardFilter} rewards` : ''}</p>
+          <p className="text-xs text-gray-400 mt-1">Register contacts as referral members from their profile</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {filtered.map(member => {
+            const stats = memberStats.get(member.id);
+            return (
+              <div
+                key={member.id}
+                className="relate-card p-4 flex items-center gap-3"
+              >
+                <div
+                  className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold text-gray-600 shrink-0"
+                  style={{ backgroundColor: 'rgba(111,175,143,0.15)' }}
+                >
+                  {member.first_name.charAt(0).toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">{personDisplayName(member)}</p>
+                  <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                    <span className="text-xs text-gray-500">${member.referral_reward_amount ?? 250} reward</span>
+                    <span className="text-xs text-gray-400">{stats?.count ?? 0} referral{(stats?.count ?? 0) !== 1 ? 's' : ''}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  {(stats?.pendingReward ?? 0) > 0 && (
+                    <span className="px-1.5 py-0.5 rounded text-[9px] font-medium" style={{ backgroundColor: 'rgba(245,158,11,0.12)', color: '#d97706' }}>
+                      {stats!.pendingReward} pending
+                    </span>
+                  )}
+                  {(stats?.earnedReward ?? 0) > 0 && (
+                    <span className="px-1.5 py-0.5 rounded text-[9px] font-medium" style={{ backgroundColor: 'rgba(111,175,143,0.15)', color: '#4a8a6a' }}>
+                      {stats!.earnedReward} earned
+                    </span>
+                  )}
+                  {(stats?.paidReward ?? 0) > 0 && (
+                    <span className="px-1.5 py-0.5 rounded text-[9px] font-medium" style={{ backgroundColor: 'rgba(156,163,175,0.12)', color: '#6b7280' }}>
+                      {stats!.paidReward} paid
+                    </span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
