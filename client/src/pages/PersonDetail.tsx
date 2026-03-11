@@ -1,12 +1,17 @@
+import { useState } from 'react';
 import { useParams, useLocation } from 'wouter';
 import { usePerson } from '@/hooks/usePeople';
 import { PersonDetailPanel } from '@/components/people/PersonDetailPanel';
+import { EditContactForm } from '@/components/people/EditContactForm';
 import { Loader2 } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function PersonDetail() {
   const params = useParams<{ id: string }>();
   const [, setLocation] = useLocation();
   const { data: person, isLoading, error } = usePerson(params.id);
+  const [editing, setEditing] = useState(false);
+  const qc = useQueryClient();
 
   if (isLoading) {
     return (
@@ -30,10 +35,24 @@ export default function PersonDetail() {
     );
   }
 
+  if (editing) {
+    return (
+      <EditContactForm
+        person={person}
+        onClose={() => setEditing(false)}
+        onUpdated={() => {
+          setEditing(false);
+          qc.invalidateQueries({ queryKey: ['people', params.id] });
+        }}
+      />
+    );
+  }
+
   return (
     <PersonDetailPanel
       person={person}
       onBack={() => setLocation('/people')}
+      onEdit={() => setEditing(true)}
     />
   );
 }

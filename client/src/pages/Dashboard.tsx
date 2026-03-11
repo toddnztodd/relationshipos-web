@@ -181,9 +181,13 @@ export default function Dashboard() {
           )}
 
           {/* Briefing Contacts */}
-          {briefing && briefing.contacts.length > 0 && (
-            <div className="relate-card p-4">
-              <h2 className="text-sm font-semibold text-gray-900 mb-3">Today's Briefing</h2>
+          <div className="relate-card p-4">
+            <h2 className="text-sm font-semibold text-gray-900 mb-3">Today's Briefing</h2>
+            {briefLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+              </div>
+            ) : briefing && briefing.contacts.length > 0 ? (
               <div className="space-y-1">
                 {briefing.contacts.slice(0, 5).map((c) => (
                   <Link key={c.id} href={`/people/${c.id}`}>
@@ -205,8 +209,12 @@ export default function Dashboard() {
                   </Link>
                 ))}
               </div>
-            </div>
-          )}
+            ) : (
+              <p className="text-xs text-gray-400 italic py-4 text-center">
+                All caught up — no follow-ups due today
+              </p>
+            )}
+          </div>
         </>
       )}
     </div>

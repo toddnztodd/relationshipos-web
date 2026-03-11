@@ -1,13 +1,16 @@
 import { useState, useMemo } from 'react';
-import { useProperties, usePropertyBuyerInterest, usePropertyOwners } from '@/hooks/useProperties';
+import { useProperties, usePropertyBuyerInterest, usePropertyOwners, useAddBuyerInterest, useUpdateBuyerInterest, useDeleteBuyerInterest, useLinkOwner, useUnlinkOwner } from '@/hooks/useProperties';
+import { usePeople } from '@/hooks/usePeople';
+import { personDisplayName } from '@/types';
 import { usePropertySignals } from '@/hooks/useSignals';
 import { SignalCard } from '@/components/shared/SignalCard';
 import { ConfidenceBar } from '@/components/shared/ConfidenceBar';
 import type { Property } from '@/types';
-import { Search, Home, Loader2, ArrowLeft, MapPin, Bed, Bath, DollarSign, Tag, Users, Plus, X, ChevronDown, ChevronRight } from 'lucide-react';
+import { Search, Home, Loader2, ArrowLeft, MapPin, Bed, Bath, DollarSign, Tag, Users, Plus, X, ChevronDown, ChevronRight, Pencil } from 'lucide-react';
 import { useCreateProperty } from '@/hooks/useProperties';
 import { VoiceRecorder } from '@/components/shared/VoiceRecorder';
 import { ListingChecklist } from '@/components/properties/ListingChecklist';
+import { EditPropertyForm } from '@/components/properties/EditPropertyForm';
 import type { PropertyCreate } from '@/types';
 
 export default function Properties() {
@@ -15,6 +18,7 @@ export default function Properties() {
   const [search, setSearch] = useState('');
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [editingProperty, setEditingProperty] = useState<Property | null>(null);
 
   const filtered = useMemo(() => {
     if (!search.trim()) return properties;
@@ -27,11 +31,25 @@ export default function Properties() {
     );
   }, [properties, search]);
 
+  if (editingProperty) {
+    return (
+      <EditPropertyForm
+        property={editingProperty}
+        onClose={() => setEditingProperty(null)}
+        onUpdated={() => {
+          setEditingProperty(null);
+          setSelectedProperty(null);
+        }}
+      />
+    );
+  }
+
   if (selectedProperty) {
     return (
       <PropertyDetailPanel
         property={selectedProperty}
         onBack={() => setSelectedProperty(null)}
+        onEdit={() => setEditingProperty(selectedProperty)}
       />
     );
   }
@@ -165,10 +183,30 @@ function PropertyCard({ property, onClick }: { property: Property; onClick: () =
 }
 
 // ── Property Detail Panel ──
-function PropertyDetailPanel({ property, onBack }: { property: Property; onBack: () => void }) {
+const BUYER_STAGES = ['seen', 'interested', 'hot', 'offer', 'purchased'] as const;
+
+function PropertyDetailPanel({ property, onBack, onEdit }: { property: Property; onBack: () => void; onEdit?: () => void }) {
   const { data: buyers = [] } = usePropertyBuyerInterest(property.id);
   const { data: owners = [] } = usePropertyOwners(property.id);
   const { data: signals = [] } = usePropertySignals(property.id);
+  const { data: allPeople = [] } = usePeople();
+
+  // Buyer interest state
+  const addBuyer = useAddBuyerInterest();
+  const updateBuyer = useUpdateBuyerInterest(property.id);
+  const deleteBuyer = useDeleteBuyerInterest(property.id);
+  const [showAddBuyer, setShowAddBuyer] = useState(false);
+  const [newBuyer, setNewBuyer] = useState({ person_name: '', status: 'seen', notes: '' });
+  const [editingBuyerId, setEditingBuyerId] = useState<number | null>(null);
+  const [editBuyerData, setEditBuyerData] = useState({ status: '', notes: '' });
+
+  // Owner linking state
+  const linkOwnerMut = useLinkOwner();
+  const unlinkOwnerMut = useUnlinkOwner(property.id);
+  const [showLinkOwner, setShowLinkOwner] = useState(false);
+  const [ownerSearch, setOwnerSearch] = useState('');
+  const [selectedOwnerId, setSelectedOwnerId] = useState<number | null>(null);
+  const [ownerRole, setOwnerRole] = useState('');
 
   return (
     <div className="h-full overflow-auto">
@@ -180,7 +218,18 @@ function PropertyDetailPanel({ property, onBack }: { property: Property; onBack:
           <ArrowLeft className="w-3.5 h-3.5" />
           Back to Properties
         </button>
-        <h2 className="text-lg font-semibold text-gray-900">{property.address}</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-gray-900">{property.address}</h2>
+          {onEdit && (
+            <button
+              onClick={onEdit}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-gray-600 hover:bg-gray-100 transition-colors"
+            >
+              <Pencil className="w-3 h-3" />
+              Edit
+            </button>
+          )}
+        </div>
         {property.suburb && (
           <p className="text-sm text-gray-500 flex items-center gap-1 mt-0.5">
             <MapPin className="w-3.5 h-3.5" />
@@ -230,52 +279,238 @@ function PropertyDetailPanel({ property, onBack }: { property: Property; onBack:
         )}
 
         {/* Owners */}
-        {owners.length > 0 && (
-          <div className="relate-card p-4">
-            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Owners</h3>
+        <div className="relate-card p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Owners</h3>
+            <button
+              onClick={() => setShowLinkOwner((v) => !v)}
+              className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium hover:bg-gray-100 transition-colors"
+              style={{ color: '#6FAF8F' }}
+            >
+              <Plus className="w-3 h-3" />
+              Link
+            </button>
+          </div>
+          {showLinkOwner && (
+            <div className="mb-3 p-3 rounded-lg space-y-2" style={{ backgroundColor: 'rgba(111,175,143,0.06)', border: '1px solid #ECEAE5' }}>
+              <input
+                type="text"
+                placeholder="Search contacts…"
+                value={ownerSearch}
+                onChange={(e) => setOwnerSearch(e.target.value)}
+                className="w-full px-3 py-1.5 rounded-lg border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#6FAF8F]/30"
+                style={{ borderColor: '#ECEAE5' }}
+              />
+              {ownerSearch.trim() && (
+                <div className="max-h-32 overflow-auto space-y-0.5">
+                  {allPeople
+                    .filter((p) => personDisplayName(p).toLowerCase().includes(ownerSearch.toLowerCase()))
+                    .slice(0, 5)
+                    .map((p) => (
+                      <button
+                        key={p.id}
+                        onClick={() => { setSelectedOwnerId(p.id); setOwnerSearch(personDisplayName(p)); }}
+                        className={`w-full text-left px-2 py-1.5 rounded text-sm hover:bg-gray-100 transition-colors ${
+                          selectedOwnerId === p.id ? 'bg-gray-100 font-medium' : ''
+                        }`}
+                      >
+                        {personDisplayName(p)}
+                      </button>
+                    ))}
+                </div>
+              )}
+              <input
+                type="text"
+                placeholder="Role (optional)"
+                value={ownerRole}
+                onChange={(e) => setOwnerRole(e.target.value)}
+                className="w-full px-3 py-1.5 rounded-lg border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#6FAF8F]/30"
+                style={{ borderColor: '#ECEAE5' }}
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={async () => {
+                    if (!selectedOwnerId) return;
+                    await linkOwnerMut.mutateAsync({ propertyId: property.id, data: { person_id: selectedOwnerId, role: ownerRole.trim() || null } });
+                    setShowLinkOwner(false); setOwnerSearch(''); setSelectedOwnerId(null); setOwnerRole('');
+                  }}
+                  disabled={!selectedOwnerId || linkOwnerMut.isPending}
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium text-white disabled:opacity-50"
+                  style={{ backgroundColor: '#6FAF8F' }}
+                >
+                  Link Owner
+                </button>
+                <button onClick={() => { setShowLinkOwner(false); setOwnerSearch(''); setSelectedOwnerId(null); setOwnerRole(''); }} className="px-3 py-1.5 rounded-lg text-xs text-gray-500 hover:bg-gray-100">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+          {owners.length === 0 ? (
+            <p className="text-xs text-gray-400 italic">No owners linked</p>
+          ) : (
             <div className="space-y-1">
               {owners.map((o) => (
-                <div key={o.person_id} className="flex items-center gap-3 px-3 py-2 rounded-lg" style={{ backgroundColor: 'rgba(111,175,143,0.06)' }}>
-                  <Users className="w-4 h-4 text-gray-400" />
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      {[o.first_name, o.last_name].filter(Boolean).join(' ')}
-                    </p>
-                    {o.role && <p className="text-xs text-gray-500">{o.role}</p>}
+                <div key={o.person_id} className="flex items-center justify-between px-3 py-2 rounded-lg" style={{ backgroundColor: 'rgba(111,175,143,0.06)' }}>
+                  <div className="flex items-center gap-3">
+                    <Users className="w-4 h-4 text-gray-400" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">{[o.first_name, o.last_name].filter(Boolean).join(' ')}</p>
+                      {o.role && <p className="text-xs text-gray-500">{o.role}</p>}
+                    </div>
                   </div>
+                  <button
+                    onClick={() => unlinkOwnerMut.mutate(o.person_id)}
+                    className="text-xs text-red-400 hover:text-red-600 transition-colors px-2 py-1"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
                 </div>
               ))}
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Buyer Interest */}
-        {buyers.length > 0 && (
-          <div className="relate-card p-4">
-            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Buyer Interest</h3>
+        <div className="relate-card p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Buyer Interest</h3>
+            <button
+              onClick={() => setShowAddBuyer((v) => !v)}
+              className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium hover:bg-gray-100 transition-colors"
+              style={{ color: '#6FAF8F' }}
+            >
+              <Plus className="w-3 h-3" />
+              Add
+            </button>
+          </div>
+          {showAddBuyer && (
+            <div className="mb-3 p-3 rounded-lg space-y-2" style={{ backgroundColor: 'rgba(111,175,143,0.06)', border: '1px solid #ECEAE5' }}>
+              <input
+                type="text"
+                placeholder="Contact name"
+                value={newBuyer.person_name}
+                onChange={(e) => setNewBuyer((p) => ({ ...p, person_name: e.target.value }))}
+                className="w-full px-3 py-1.5 rounded-lg border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#6FAF8F]/30"
+                style={{ borderColor: '#ECEAE5' }}
+              />
+              <select
+                value={newBuyer.status}
+                onChange={(e) => setNewBuyer((p) => ({ ...p, status: e.target.value }))}
+                className="w-full px-3 py-1.5 rounded-lg border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#6FAF8F]/30"
+                style={{ borderColor: '#ECEAE5' }}
+              >
+                {BUYER_STAGES.map((s) => (
+                  <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+                ))}
+              </select>
+              <input
+                type="text"
+                placeholder="Notes (optional)"
+                value={newBuyer.notes}
+                onChange={(e) => setNewBuyer((p) => ({ ...p, notes: e.target.value }))}
+                className="w-full px-3 py-1.5 rounded-lg border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#6FAF8F]/30"
+                style={{ borderColor: '#ECEAE5' }}
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={async () => {
+                    if (!newBuyer.person_name.trim()) return;
+                    await addBuyer.mutateAsync({
+                      propertyId: property.id,
+                      data: { person_name: newBuyer.person_name.trim(), status: newBuyer.status, notes: newBuyer.notes.trim() || null },
+                    });
+                    setNewBuyer({ person_name: '', status: 'seen', notes: '' }); setShowAddBuyer(false);
+                  }}
+                  disabled={!newBuyer.person_name.trim() || addBuyer.isPending}
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium text-white disabled:opacity-50"
+                  style={{ backgroundColor: '#6FAF8F' }}
+                >
+                  Add Buyer
+                </button>
+                <button onClick={() => { setShowAddBuyer(false); setNewBuyer({ person_name: '', status: 'seen', notes: '' }); }} className="px-3 py-1.5 rounded-lg text-xs text-gray-500 hover:bg-gray-100">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+          {buyers.length === 0 ? (
+            <p className="text-xs text-gray-400 italic">No buyer interest recorded</p>
+          ) : (
             <div className="space-y-1">
               {buyers.map((b) => (
-                <div key={b.id} className="flex items-center justify-between px-3 py-2 rounded-lg bg-gray-50">
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">{b.person_name || `Person #${b.person_id}`}</p>
-                    {b.notes && <p className="text-xs text-gray-500 mt-0.5">{b.notes}</p>}
-                  </div>
-                  {b.interest_level != null && (
-                    <div className="flex items-center gap-0.5">
-                      {[1, 2, 3, 4, 5].map((n) => (
-                        <span
-                          key={n}
-                          className="w-1.5 h-4 rounded-full"
-                          style={{ backgroundColor: n <= b.interest_level! ? '#6FAF8F' : '#e5e7eb' }}
-                        />
-                      ))}
+                <div key={b.id} className="px-3 py-2 rounded-lg bg-gray-50">
+                  {editingBuyerId === b.id ? (
+                    <div className="space-y-2">
+                      <select
+                        value={editBuyerData.status}
+                        onChange={(e) => setEditBuyerData((p) => ({ ...p, status: e.target.value }))}
+                        className="w-full px-2 py-1 rounded border bg-white text-sm"
+                        style={{ borderColor: '#ECEAE5' }}
+                      >
+                        {BUYER_STAGES.map((s) => (
+                          <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+                        ))}
+                      </select>
+                      <input
+                        type="text"
+                        value={editBuyerData.notes}
+                        onChange={(e) => setEditBuyerData((p) => ({ ...p, notes: e.target.value }))}
+                        placeholder="Notes"
+                        className="w-full px-2 py-1 rounded border bg-white text-sm"
+                        style={{ borderColor: '#ECEAE5' }}
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          onClick={async () => {
+                            await updateBuyer.mutateAsync({ interestId: b.id, data: { status: editBuyerData.status, notes: editBuyerData.notes.trim() || null } });
+                            setEditingBuyerId(null);
+                          }}
+                          className="px-2 py-1 rounded text-xs font-medium text-white" style={{ backgroundColor: '#6FAF8F' }}
+                        >
+                          Save
+                        </button>
+                        <button onClick={() => setEditingBuyerId(null)} className="px-2 py-1 rounded text-xs text-gray-500 hover:bg-gray-100">Cancel</button>
+                        <button
+                          onClick={async () => { await deleteBuyer.mutateAsync(b.id); setEditingBuyerId(null); }}
+                          className="px-2 py-1 rounded text-xs text-red-500 hover:bg-red-50 ml-auto"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </div>
+                  ) : (
+                    <button
+                      onClick={() => { setEditingBuyerId(b.id); setEditBuyerData({ status: b.status || 'seen', notes: b.notes || '' }); }}
+                      className="w-full text-left"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">{b.person_name || `Person #${b.person_id}`}</p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            {b.status && (
+                              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-medium" style={{ backgroundColor: 'rgba(111,175,143,0.12)', color: '#4a8a6a' }}>
+                                {b.status}
+                              </span>
+                            )}
+                            {b.notes && <span className="text-xs text-gray-500 truncate">{b.notes}</span>}
+                          </div>
+                        </div>
+                        {b.interest_level != null && (
+                          <div className="flex items-center gap-0.5">
+                            {[1, 2, 3, 4, 5].map((n) => (
+                              <span key={n} className="w-1.5 h-4 rounded-full" style={{ backgroundColor: n <= b.interest_level! ? '#6FAF8F' : '#e5e7eb' }} />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </button>
                   )}
                 </div>
               ))}
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Signals */}
         <div className="relate-card p-4">
@@ -383,6 +618,14 @@ function AddPropertyForm({ onClose, onCreated }: { onClose: () => void; onCreate
     if (!form.address.trim()) return;
     setSubmitting(true);
     try {
+      const sellabilityMap: Record<string, { score: number; label: string }> = {
+        '1': { score: 0.2, label: 'Very Low' },
+        '2': { score: 0.4, label: 'Low' },
+        '3': { score: 0.6, label: 'Moderate' },
+        '4': { score: 0.8, label: 'High' },
+        '5': { score: 1.0, label: 'Very High' },
+      };
+      const sellEntry = form.sellability ? sellabilityMap[form.sellability] : null;
       const payload: PropertyCreate = {
         address: form.address.trim(),
         suburb: form.suburb?.trim() || null,
@@ -396,6 +639,18 @@ function AddPropertyForm({ onClose, onCreated }: { onClose: () => void; onCreate
           : form.cv
           ? Number(form.cv.replace(/[^0-9.]/g, ''))
           : null,
+        council_valuation: form.cv ? Number(form.cv.replace(/[^0-9.]/g, '')) : null,
+        land_area: form.land_area ? Number(form.land_area.replace(/[^0-9.]/g, '')) : null,
+        last_sold_amount: form.last_sold_amount ? Number(form.last_sold_amount) : null,
+        last_sold_date: form.last_sold_date?.trim() || null,
+        current_listing_price: form.current_listing_price ? Number(form.current_listing_price) : null,
+        listing_url: form.listing_url?.trim() || null,
+        listing_agent: form.listing_agent?.trim() || null,
+        listing_agency: form.listing_agency?.trim() || null,
+        last_listed_date: form.last_listed_date?.trim() || null,
+        last_listing_result: form.last_listing_result?.trim() || null,
+        sellability_score: sellEntry?.score ?? null,
+        sellability_label: sellEntry?.label ?? null,
       };
       await createProp.mutateAsync(payload);
       onCreated();

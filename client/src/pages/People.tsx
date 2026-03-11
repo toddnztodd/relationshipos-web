@@ -11,6 +11,7 @@ import { ContactReappearancePrompt } from '@/components/people/ContactReappearan
 import { HealthBadge } from '@/components/shared/HealthBadge';
 import { Search, Users, Loader2, Plus, CheckSquare, X, Archive, RotateCcw, ShieldCheck } from 'lucide-react';
 import { VoiceRecorder } from '@/components/shared/VoiceRecorder';
+import { EditContactForm } from '@/components/people/EditContactForm';
 import type { Person, Tier, PersonCreate } from '@/types';
 import { personDisplayName } from '@/types';
 
@@ -34,6 +35,9 @@ export default function People() {
 
   // Add contact form state
   const [showAddForm, setShowAddForm] = useState(false);
+
+  // Edit contact state
+  const [editingPerson, setEditingPerson] = useState<Person | null>(null);
 
   const filtered = useMemo(() => {
     let list = people;
@@ -73,11 +77,25 @@ export default function People() {
   }, [people, selectedIds]);
 
   // Person detail view
+  if (editingPerson) {
+    return (
+      <EditContactForm
+        person={editingPerson}
+        onClose={() => setEditingPerson(null)}
+        onUpdated={() => {
+          setEditingPerson(null);
+          setSelectedPerson(null);
+        }}
+      />
+    );
+  }
+
   if (selectedPerson) {
     return (
       <PersonDetailPanel
         person={selectedPerson}
         onBack={() => setSelectedPerson(null)}
+        onEdit={() => setEditingPerson(selectedPerson)}
       />
     );
   }

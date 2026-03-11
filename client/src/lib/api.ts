@@ -193,6 +193,46 @@ export async function getPropertyOwners(id: number | string): Promise<PropertyOw
   return apiFetch(`/properties/${id}/owners`);
 }
 
+// ── Buyer Interest ──
+export async function addBuyerInterest(
+  propertyId: number | string,
+  data: { person_id?: number | null; person_name?: string | null; interest_level?: number | null; notes?: string | null; status?: string | null },
+): Promise<BuyerInterest> {
+  return apiFetch(`/properties/${propertyId}/buyer-interest`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateBuyerInterest(
+  interestId: number,
+  data: { interest_level?: number | null; notes?: string | null; status?: string | null },
+): Promise<BuyerInterest> {
+  return apiFetch(`/buyer-interest/${interestId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteBuyerInterest(interestId: number): Promise<void> {
+  await apiFetch(`/buyer-interest/${interestId}`, { method: 'DELETE' });
+}
+
+// ── Property Owners ──
+export async function linkOwner(
+  propertyId: number | string,
+  data: { person_id: number; role?: string | null },
+): Promise<PropertyOwner> {
+  return apiFetch(`/properties/${propertyId}/owners`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function unlinkOwner(propertyId: number | string, personId: number): Promise<void> {
+  await apiFetch(`/properties/${propertyId}/owners/${personId}`, { method: 'DELETE' });
+}
+
 export async function parseVoiceProperty(transcription: string): Promise<Partial<PropertyCreate>> {
   return apiFetch('/properties/parse-voice', {
     method: 'POST',

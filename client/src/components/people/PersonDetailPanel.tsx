@@ -5,7 +5,7 @@ import { usePersonSignals } from '@/hooks/useSignals';
 import { HealthBadge } from '@/components/shared/HealthBadge';
 import { SignalCard } from '@/components/shared/SignalCard';
 import { RelationshipTimeline } from './RelationshipTimeline';
-import { Phone, Mail, Tag, ArrowLeft } from 'lucide-react';
+import { Phone, Mail, Tag, ArrowLeft, Pencil } from 'lucide-react';
 
 const TIER_LABELS: Record<string, string> = {
   A: 'Tier A — Top Priority',
@@ -16,9 +16,10 @@ const TIER_LABELS: Record<string, string> = {
 interface PersonDetailPanelProps {
   person: Person;
   onBack: () => void;
+  onEdit?: () => void;
 }
 
-export function PersonDetailPanel({ person, onBack }: PersonDetailPanelProps) {
+export function PersonDetailPanel({ person, onBack, onEdit }: PersonDetailPanelProps) {
   const { data: activities = [], isLoading: activitiesLoading } = usePersonActivities(person.id);
   const { data: signals = [] } = usePersonSignals(person.id);
   const displayName = personDisplayName(person);
@@ -44,8 +45,19 @@ export function PersonDetailPanel({ person, onBack }: PersonDetailPanelProps) {
           >
             {person.first_name.charAt(0).toUpperCase()}
           </div>
-          <div className="min-w-0">
-            <h2 className="text-lg font-semibold text-gray-900">{displayName}</h2>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900">{displayName}</h2>
+              {onEdit && (
+                <button
+                  onClick={onEdit}
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-gray-600 hover:bg-gray-100 transition-colors"
+                >
+                  <Pencil className="w-3 h-3" />
+                  Edit
+                </button>
+              )}
+            </div>
             <div className="flex items-center gap-2 mt-1">
               {person.tier && (
                 <span className="text-xs text-gray-500">{TIER_LABELS[person.tier] ?? `Tier ${person.tier}`}</span>

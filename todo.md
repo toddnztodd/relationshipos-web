@@ -116,3 +116,13 @@
 - [x] Write vitest tests for checklist
 - [x] Deploy with public visibility
 - [x] Push to GitHub
+
+## Audit Fixes (March 2026)
+- [x] Fix 1: Property data-loss bug — include listing history fields in Add Property submit payload
+- [x] Fix 2: Edit capability for contacts and properties (inline edit forms, wire to PATCH/PUT endpoints)
+- [x] Fix 3: Buyer interest add/edit UI on PropertyDetailPanel
+- [x] Fix 4: Owner linking UI on PropertyDetailPanel
+- [x] Fix 5: Wire floating mic to context-aware global voice capture modal
+- [x] Fix 6: Daily Briefing empty state message instead of hiding section
+- [x] Fix 7: Sellability option 5 (Very High) in Add/Edit Property forms
+- [x] Fix 8: Community add UI (Add Community button and form)

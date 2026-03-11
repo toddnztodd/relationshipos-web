@@ -108,6 +108,16 @@ export interface PropertyCreate {
   estimated_value?: number | null;
   sellability_score?: number | null;
   sellability_label?: string | null;
+  council_valuation?: number | null;
+  land_area?: number | null;
+  last_sold_amount?: number | null;
+  last_sold_date?: string | null;
+  current_listing_price?: number | null;
+  listing_url?: string | null;
+  listing_agent?: string | null;
+  listing_agency?: string | null;
+  last_listed_date?: string | null;
+  last_listing_result?: string | null;
 }
 
 // ── Activity ──

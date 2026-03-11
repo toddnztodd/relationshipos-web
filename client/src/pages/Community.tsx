@@ -1,25 +1,36 @@
-import { useState, useEffect } from 'react';
-import { getCommunityEntities } from '@/lib/api';
-import type { CommunityEntity } from '@/types';
+import { useState, useEffect, useCallback } from 'react';
+import { getCommunityEntities, createCommunityEntity } from '@/lib/api';
+import type { CommunityEntity, CommunityEntityCreate } from '@/types';
 import { personDisplayName } from '@/types';
-import { Loader2, Building2, MapPin, ArrowLeft, Users, Home } from 'lucide-react';
+import { Loader2, Building2, MapPin, ArrowLeft, Users, Home, Plus, X } from 'lucide-react';
+
+const ENTITY_TYPES = ['school', 'sports_club', 'church', 'business', 'community_group', 'other'] as const;
 
 export default function Community() {
   const [entities, setEntities] = useState<CommunityEntity[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<CommunityEntity | null>(null);
+  const [showAddForm, setShowAddForm] = useState(false);
 
-  useEffect(() => {
+  const fetchEntities = useCallback(() => {
+    setLoading(true);
     getCommunityEntities()
       .then(setEntities)
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    fetchEntities();
+  }, [fetchEntities]);
+
   if (selected) {
     return (
       <div className="h-full overflow-auto">
-        <div className="sticky top-0 bg-white/80 backdrop-blur-sm border-b border-gray-100 px-6 py-4 z-10">
+        <div
+          className="sticky top-0 backdrop-blur-sm px-6 py-4 z-10"
+          style={{ background: 'rgba(248,247,244,0.9)', borderBottom: '1px solid #ECEAE5' }}
+        >
           <button
             onClick={() => setSelected(null)}
             className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 transition-colors mb-3"
@@ -88,13 +99,35 @@ export default function Community() {
     );
   }
 
+  if (showAddForm) {
+    return (
+      <AddCommunityForm
+        onClose={() => setShowAddForm(false)}
+        onCreated={() => {
+          setShowAddForm(false);
+          fetchEntities();
+        }}
+      />
+    );
+  }
+
   return (
     <div className="p-6 max-w-3xl">
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-gray-900">Community</h1>
-        <p className="text-sm text-gray-500 mt-0.5">
-          {entities.length} entit{entities.length !== 1 ? 'ies' : 'y'}
-        </p>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-900">Community</h1>
+          <p className="text-sm text-gray-500 mt-0.5">
+            {entities.length} entit{entities.length !== 1 ? 'ies' : 'y'}
+          </p>
+        </div>
+        <button
+          onClick={() => setShowAddForm(true)}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium text-white transition-colors hover:opacity-90"
+          style={{ backgroundColor: '#6FAF8F' }}
+        >
+          <Plus className="w-4 h-4" />
+          Add Community
+        </button>
       </div>
 
       {loading ? (
@@ -105,6 +138,13 @@ export default function Community() {
         <div className="text-center py-20">
           <Building2 className="w-10 h-10 text-gray-300 mx-auto mb-3" />
           <p className="text-sm text-gray-500">No community entities yet</p>
+          <button
+            onClick={() => setShowAddForm(true)}
+            className="mt-3 text-sm font-medium hover:underline"
+            style={{ color: '#6FAF8F' }}
+          >
+            Add your first community
+          </button>
         </div>
       ) : (
         <div className="space-y-1">
@@ -140,6 +180,124 @@ export default function Community() {
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+// ── Add Community Form ──
+function AddCommunityForm({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
+  const [form, setForm] = useState({
+    name: '',
+    type: 'community_group',
+    location: '',
+    notes: '',
+  });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
+    setForm((prev) => ({ ...prev, [field]: e.target.value }));
+
+  async function handleSubmit() {
+    if (!form.name.trim()) return;
+    setSaving(true);
+    setError('');
+    try {
+      await createCommunityEntity({
+        name: form.name.trim(),
+        type: form.type,
+        location: form.location.trim() || undefined,
+        notes: form.notes.trim() || undefined,
+      } as CommunityEntityCreate);
+      onCreated();
+    } catch (err: any) {
+      setError(err?.message || 'Failed to create community');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="p-6 max-w-lg">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-lg font-semibold text-gray-900">Add Community</h2>
+        <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+          <X className="w-5 h-5" />
+        </button>
+      </div>
+
+      <div className="space-y-4">
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">Name *</label>
+          <input
+            type="text"
+            value={form.name}
+            onChange={set('name')}
+            placeholder="e.g. Remuera Primary School"
+            className="w-full px-3 py-2 rounded-xl border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#6FAF8F]/30"
+            style={{ borderColor: '#ECEAE5' }}
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">Type</label>
+          <select
+            value={form.type}
+            onChange={set('type')}
+            className="w-full px-3 py-2 rounded-xl border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#6FAF8F]/30"
+            style={{ borderColor: '#ECEAE5' }}
+          >
+            {ENTITY_TYPES.map((t) => (
+              <option key={t} value={t}>
+                {t.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">Location</label>
+          <input
+            type="text"
+            value={form.location}
+            onChange={set('location')}
+            placeholder="e.g. Remuera, Auckland"
+            className="w-full px-3 py-2 rounded-xl border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#6FAF8F]/30"
+            style={{ borderColor: '#ECEAE5' }}
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">Notes</label>
+          <textarea
+            value={form.notes}
+            onChange={set('notes')}
+            rows={3}
+            placeholder="Any notes about this community..."
+            className="w-full px-3 py-2 rounded-xl border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#6FAF8F]/30 resize-none"
+            style={{ borderColor: '#ECEAE5' }}
+          />
+        </div>
+
+        {error && <p className="text-xs text-red-500">{error}</p>}
+
+        <div className="flex gap-3 pt-2">
+          <button
+            onClick={handleSubmit}
+            disabled={!form.name.trim() || saving}
+            className="flex-1 py-2.5 rounded-xl text-sm font-medium text-white disabled:opacity-50 transition-colors hover:opacity-90"
+            style={{ backgroundColor: '#6FAF8F' }}
+          >
+            {saving ? 'Creating…' : 'Create Community'}
+          </button>
+          <button
+            onClick={onClose}
+            className="px-4 py-2.5 rounded-xl text-sm text-gray-600 hover:bg-gray-100 transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
