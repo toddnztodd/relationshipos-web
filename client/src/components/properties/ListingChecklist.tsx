@@ -5,6 +5,7 @@ import {
   updateChecklistItem,
   deleteChecklist,
 } from '@/lib/api';
+import { haptic, HapticPattern } from '@/lib/utils';
 import type { Checklist, ChecklistPhase, ChecklistItem } from '@/types';
 import {
   ChevronDown,
@@ -75,9 +76,16 @@ export function ListingChecklist({ propertyId, propertyAddress }: ListingCheckli
     }
   };
 
+  const [justCompleted, setJustCompleted] = useState<Set<number>>(new Set());
+
   const handleToggleItem = async (item: ChecklistItem) => {
     if (!checklist) return;
     const newComplete = !item.is_complete;
+    if (newComplete) {
+      haptic(HapticPattern.tap);
+      setJustCompleted((prev) => new Set(Array.from(prev).concat(item.id)));
+      setTimeout(() => setJustCompleted((prev) => { const n = new Set(prev); n.delete(item.id); return n; }), 300);
+    }
 
     // Optimistic update
     setChecklist((prev) => {
@@ -330,7 +338,7 @@ export function ListingChecklist({ propertyId, propertyAddress }: ListingCheckli
                           className="mt-0.5 flex-shrink-0"
                         >
                           {item.is_complete ? (
-                            <div className="w-4 h-4 rounded bg-[#6FAF8F] flex items-center justify-center">
+                            <div className={`w-4 h-4 rounded bg-[#6FAF8F] flex items-center justify-center ${justCompleted.has(item.id) ? 'checkbox-complete' : ''}`}>
                               <Check className="w-3 h-3 text-white" />
                             </div>
                           ) : (
@@ -340,8 +348,10 @@ export function ListingChecklist({ propertyId, propertyAddress }: ListingCheckli
 
                         <div className="flex-1 min-w-0">
                           <span
-                            className={`text-xs leading-relaxed ${
-                              item.is_complete ? 'text-gray-400 line-through' : 'text-gray-700'
+                            className={`text-xs leading-relaxed transition-colors ${
+                              item.is_complete
+                                ? `text-gray-400 ${justCompleted.has(item.id) ? 'strikethrough-animate' : 'line-through'}`
+                                : 'text-gray-700'
                             }`}
                           >
                             {item.item_text}

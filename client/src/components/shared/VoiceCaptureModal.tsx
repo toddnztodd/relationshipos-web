@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, Mic, MicOff, Loader2 } from 'lucide-react';
+import { X, Mic, MicOff, Loader2, DoorOpen } from 'lucide-react';
 
 interface VoiceCaptureModalProps {
   open: boolean;
@@ -183,7 +183,7 @@ export function VoiceCaptureModal({ open, onClose, mode, onResult, showDoorKnock
             className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-medium border transition-all hover:bg-gray-50 active:scale-[0.98] mb-2"
             style={{ borderColor: '#ECEAE5', color: '#6FAF8F' }}
           >
-            <span className="text-base">🚪</span> Start Door Knock Session
+            <DoorOpen size={16} /> Start Door Knock Session
           </button>
         )}
 

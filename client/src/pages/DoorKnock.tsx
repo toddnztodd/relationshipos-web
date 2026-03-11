@@ -10,17 +10,19 @@ import type { KnockResult, InterestLevel, DoorKnockEntry, Property } from '@/typ
 import {
   ArrowLeft, DoorOpen, Mic, Phone, User, MapPin, X, Check,
   ChevronRight, Loader2, Hash, ClipboardList, UserPlus, Navigation,
+  Home, Users, Handshake, Contact, LucideIcon,
 } from 'lucide-react';
+import { haptic, HapticPattern } from '@/lib/utils';
 import { toast } from 'sonner';
 
 type Phase = 'start' | 'active' | 'post_knock' | 'nearby' | 'summary';
 
-const KNOCK_RESULTS: { value: KnockResult; label: string; color: string; bg: string; icon: string }[] = [
-  { value: 'no_answer', label: 'No Answer', color: 'text-gray-600', bg: 'bg-gray-100 hover:bg-gray-200', icon: '🚪' },
-  { value: 'spoke_to_owner', label: 'Spoke to Owner', color: 'text-emerald-700', bg: 'bg-emerald-50 hover:bg-emerald-100', icon: '🏠' },
-  { value: 'spoke_to_occupant', label: 'Spoke to Occupant', color: 'text-teal-700', bg: 'bg-teal-50 hover:bg-teal-100', icon: '👋' },
-  { value: 'door_knocked', label: 'Door Knocked', color: 'text-blue-700', bg: 'bg-blue-50 hover:bg-blue-100', icon: '✊' },
-  { value: 'contact_captured', label: 'Contact Captured', color: 'text-amber-700', bg: 'bg-amber-50 hover:bg-amber-100', icon: '📇' },
+const KNOCK_RESULTS: { value: KnockResult; label: string; color: string; bg: string; Icon: LucideIcon }[] = [
+  { value: 'no_answer', label: 'No Answer', color: 'text-gray-600', bg: 'bg-gray-100 hover:bg-gray-200', Icon: DoorOpen },
+  { value: 'spoke_to_owner', label: 'Spoke to Owner', color: 'text-emerald-700', bg: 'bg-emerald-50 hover:bg-emerald-100', Icon: Home },
+  { value: 'spoke_to_occupant', label: 'Spoke to Occupant', color: 'text-teal-700', bg: 'bg-teal-50 hover:bg-teal-100', Icon: Users },
+  { value: 'door_knocked', label: 'Door Knocked', color: 'text-blue-700', bg: 'bg-blue-50 hover:bg-blue-100', Icon: Handshake },
+  { value: 'contact_captured', label: 'Contact Captured', color: 'text-amber-700', bg: 'bg-amber-50 hover:bg-amber-100', Icon: Contact },
 ];
 
 const INTEREST_LEVELS: { value: InterestLevel; label: string; color: string }[] = [
@@ -102,6 +104,7 @@ export default function DoorKnockPage() {
   // ── Log Knock ──
   async function handleKnock(result: KnockResult) {
     if (!address.trim() || !sessionId) return;
+    haptic(HapticPattern.knock);
     try {
       const entry = await logDoorKnockEntry({
         session_id: sessionId,
@@ -496,10 +499,10 @@ export default function DoorKnockPage() {
                 <button
                   key={r.value}
                   onClick={() => handleKnock(r.value)}
-                  className={`w-full flex items-center gap-3 px-4 py-4 rounded-2xl text-left transition-all active:scale-[0.98] ${r.bg}`}
+                  className={`w-full flex items-center gap-3 px-4 py-4 rounded-2xl text-left transition-all active:scale-[0.96] active:knock-tap ${r.bg}`}
                   style={{ minHeight: '56px' }}
                 >
-                  <span className="text-xl">{r.icon}</span>
+                  <r.Icon size={20} />
                   <span className={`text-sm font-semibold ${r.color}`}>{r.label}</span>
                 </button>
               ))}

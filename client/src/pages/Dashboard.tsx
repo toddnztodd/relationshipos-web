@@ -124,8 +124,19 @@ export default function Dashboard() {
               </div>
             </div>
             {sigLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+              <div className="space-y-2">
+                {[1,2,3].map((i) => (
+                  <div key={i} className="animate-pulse rounded-xl border border-[#ECEAE5] p-3 bg-white/60">
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-gray-200 shrink-0" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-3 bg-gray-200 rounded w-3/4" />
+                        <div className="h-2.5 bg-gray-100 rounded w-1/2" />
+                      </div>
+                      <div className="w-10 h-5 bg-gray-200 rounded-full shrink-0" />
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : topSignals.length === 0 ? (
               <p className="text-xs text-gray-400 italic py-4 text-center">
@@ -147,8 +158,17 @@ export default function Dashboard() {
               <h2 className="text-sm font-semibold text-gray-900">Next Best Contacts</h2>
             </div>
             {nbLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+              <div className="space-y-1">
+                {[1,2,3].map((i) => (
+                  <div key={i} className="animate-pulse flex items-center gap-3 px-3 py-2 rounded-lg">
+                    <div className="w-8 h-8 rounded-full bg-gray-200 shrink-0" />
+                    <div className="flex-1 space-y-1.5">
+                      <div className="h-3 bg-gray-200 rounded w-2/3" />
+                      <div className="h-2.5 bg-gray-100 rounded w-1/3" />
+                    </div>
+                    <div className="w-12 h-5 bg-gray-200 rounded-full shrink-0" />
+                  </div>
+                ))}
               </div>
             ) : nextBest.length === 0 ? (
               <p className="text-xs text-gray-400 italic py-4 text-center">No contacts due</p>

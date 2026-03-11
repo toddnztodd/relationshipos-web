@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { Mic, Square, Loader2, CheckCircle2, AlertCircle, X } from 'lucide-react';
 import { getToken } from '@/lib/api';
+import { haptic, HapticPattern } from '@/lib/utils';
 
 type RecorderState = 'idle' | 'recording' | 'processing' | 'success' | 'error';
 
@@ -122,6 +123,7 @@ export function VoiceRecorder({
       recorder.start();
       mediaRecorderRef.current = recorder;
       setState('recording');
+      haptic(HapticPattern.voiceStart);
     } catch {
       setState('error');
     }
@@ -129,6 +131,7 @@ export function VoiceRecorder({
 
   const stopRecording = useCallback(() => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      haptic(HapticPattern.voiceStop);
       mediaRecorderRef.current.stop();
     }
   }, []);
@@ -172,7 +175,7 @@ export function VoiceRecorder({
           className="flex items-center gap-3 px-3 py-2 rounded-lg"
           style={{ backgroundColor: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)' }}
         >
-          <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse shrink-0" />
+          <span className="w-2.5 h-2.5 rounded-full bg-red-500 mic-ring shrink-0" />
           <span className="text-sm text-red-700 font-medium">Recording…</span>
           <div className="flex items-center gap-1.5 ml-auto">
             <button

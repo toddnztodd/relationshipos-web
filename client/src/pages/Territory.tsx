@@ -329,10 +329,10 @@ function TerritoryDetail({ id, onBack }: { id: string; onBack: () => void }) {
 
       {/* Tab content */}
       <div className="px-6 py-4">
-        {tab === 'overview' && <OverviewTab territory={territory} />}
-        {tab === 'properties' && <PropertiesTab territoryId={id} onRefresh={fetchDetail} />}
-        {tab === 'coverage' && <CoverageTab territoryId={id} />}
-        {tab === 'programs' && <ProgramsTab territoryId={id} />}
+        {tab === 'overview' && <div key="overview" className="tab-content-enter"><OverviewTab territory={territory} /></div>}
+        {tab === 'properties' && <div key="properties" className="tab-content-enter"><PropertiesTab territoryId={id} onRefresh={fetchDetail} /></div>}
+        {tab === 'coverage' && <div key="coverage" className="tab-content-enter"><CoverageTab territoryId={id} /></div>}
+        {tab === 'programs' && <div key="programs" className="tab-content-enter"><ProgramsTab territoryId={id} /></div>}
       </div>
     </div>
   );

@@ -179,3 +179,15 @@
 - [x] Register service worker in main.tsx
 - [x] Add splash/loading screen to index.html
 - [x] Tests for PWA infrastructure
+
+## UI Polish Pass (March 2026)
+- [x] Haptic utility added to lib/utils.ts
+- [x] Card expand/collapse transition (max-height, ease-out)
+- [x] Checklist item completion pulse animation
+- [x] Tab fade-in + translateY animation
+- [x] Door knock result button scale animation
+- [x] Voice recording pulse ring animation verified/improved
+- [x] Emoji icons replaced with Lucide equivalents in JSX
+- [x] Spacing rhythm normalised (Dashboard, People, Properties, PersonDetail, Territory, DoorKnock)
+- [x] Skeleton loaders on People list, Properties list, Dashboard briefing, Signals
+- [x] Tests for polish utilities

@@ -99,8 +99,17 @@ export default function Properties() {
       </div>
 
       {isLoading ? (
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+        <div className="space-y-2">
+          {[1,2,3,4].map((i) => (
+            <div key={i} className="animate-pulse flex items-start gap-3 px-4 py-3 rounded-xl border border-[#ECEAE5] bg-white/60">
+              <div className="w-9 h-9 rounded-lg bg-gray-200 shrink-0 mt-0.5" />
+              <div className="flex-1 space-y-2">
+                <div className="h-3.5 bg-gray-200 rounded w-3/5" />
+                <div className="h-2.5 bg-gray-100 rounded w-2/5" />
+              </div>
+              <div className="w-14 h-5 bg-gray-200 rounded-full shrink-0" />
+            </div>
+          ))}
         </div>
       ) : error ? (
         <div className="text-center py-20">
