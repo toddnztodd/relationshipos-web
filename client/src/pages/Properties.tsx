@@ -7,6 +7,7 @@ import type { Property } from '@/types';
 import { Search, Home, Loader2, ArrowLeft, MapPin, Bed, Bath, DollarSign, Tag, Users, Plus, X, ChevronDown, ChevronRight } from 'lucide-react';
 import { useCreateProperty } from '@/hooks/useProperties';
 import { VoiceRecorder } from '@/components/shared/VoiceRecorder';
+import { ListingChecklist } from '@/components/properties/ListingChecklist';
 import type { PropertyCreate } from '@/types';
 
 export default function Properties() {
@@ -289,6 +290,9 @@ function PropertyDetailPanel({ property, onBack }: { property: Property; onBack:
             </div>
           )}
         </div>
+
+        {/* Listing Checklist */}
+        <ListingChecklist propertyId={property.id} propertyAddress={property.address} />
 
         {/* Notes */}
         {property.notes && (

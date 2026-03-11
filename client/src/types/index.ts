@@ -327,3 +327,33 @@ export interface AuthToken {
   access_token: string;
   token_type: string;
 }
+
+// ── Checklist ──
+export interface ChecklistItem {
+  id: number;
+  phase_number: number;
+  item_text: string;
+  is_complete: boolean;
+  completed_at: string | null;
+  due_date: string | null;
+  note: string | null;
+  sort_order: number;
+}
+
+export interface ChecklistPhase {
+  phase_number: number;
+  phase_name: string;
+  is_complete: boolean;
+  completed_at: string | null;
+  items: ChecklistItem[];
+}
+
+export interface Checklist {
+  id: number;
+  property_id: number;
+  sale_method: string;
+  current_phase: number;
+  phases: ChecklistPhase[];
+  created_at: string;
+  updated_at: string;
+}

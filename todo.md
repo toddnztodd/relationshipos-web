@@ -106,3 +106,13 @@
 - [x] Write vitest tests for VoiceRecorder
 - [x] Deploy with public visibility
 - [x] Push to GitHub
+
+## Property Listing Checklist
+- [x] Add Checklist/ChecklistPhase/ChecklistItem types to types/index.ts
+- [x] Add checklist API functions to lib/api.ts
+- [x] Add checklist hooks to hooks/useProperties.ts
+- [x] Create ListingChecklist.tsx component with accordion phases
+- [x] Wire ListingChecklist into PropertyDetailPanel
+- [x] Write vitest tests for checklist
+- [x] Deploy with public visibility
+- [x] Push to GitHub

@@ -2,6 +2,7 @@ import type {
   Person, PersonCreate, Property, PropertyCreate, Activity, ActivityCreate,
   DashboardData, BriefingData, NextBestContact, BuyerInterest, PropertyOwner,
   CommunityEntity, CommunityEntityCreate, AuthCredentials, AuthRegister, AuthToken,
+  Checklist, ChecklistItem,
 } from '@/types';
 
 const API_BASE = 'https://relationshipos-api.onrender.com/api/v1';
@@ -197,6 +198,47 @@ export async function parseVoiceProperty(transcription: string): Promise<Partial
     method: 'POST',
     body: JSON.stringify({ transcription }),
   });
+}
+
+// ── Checklists ──
+export async function getPropertyChecklist(propertyId: number): Promise<Checklist | null> {
+  try {
+    return await apiFetch(`/properties/${propertyId}/checklist`);
+  } catch (e: any) {
+    if (e?.message?.includes('404')) return null;
+    return null;
+  }
+}
+
+export async function createChecklist(propertyId: number, saleMethod: string): Promise<Checklist> {
+  return apiFetch(`/properties/${propertyId}/checklist`, {
+    method: 'POST',
+    body: JSON.stringify({ sale_method: saleMethod }),
+  });
+}
+
+export async function updateChecklistItem(
+  itemId: number,
+  updates: { is_complete?: boolean; due_date?: string; note?: string },
+): Promise<ChecklistItem> {
+  return apiFetch(`/checklist-items/${itemId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(updates),
+  });
+}
+
+export async function updateChecklistPhase(
+  checklistId: number,
+  currentPhase: number,
+): Promise<Checklist> {
+  return apiFetch(`/checklists/${checklistId}/phase`, {
+    method: 'PATCH',
+    body: JSON.stringify({ current_phase: currentPhase }),
+  });
+}
+
+export async function deleteChecklist(checklistId: number): Promise<void> {
+  await apiFetch(`/checklists/${checklistId}`, { method: 'DELETE' });
 }
 
 // ── Dashboard ──
