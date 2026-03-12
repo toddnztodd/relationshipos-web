@@ -191,3 +191,15 @@
 - [x] Spacing rhythm normalised (Dashboard, People, Properties, PersonDetail, Territory, DoorKnock)
 - [x] Skeleton loaders on People list, Properties list, Dashboard briefing, Signals
 - [x] Tests for polish utilities
+
+## Stability + Branding Cleanup (March 2026)
+- [x] Diagnose crash root cause (service worker cache mismatch)
+- [x] Fix service worker: safe cache invalidation, version string, update flow
+- [x] Add version-aware update detection and hard reload on mismatch
+- [x] Branding: tagline changed to "The Relationship Operating System"
+- [x] Branding: splash screen tagline updated
+- [x] Branding: manifest.json description updated
+- [x] Manus badge: investigate and suppress if possible (platform-level, not removable from app code)
+- [x] Add startup error logging (bootstrap, auth, router, dashboard)
+- [x] Verify error boundary is in place and descriptive
+- [x] Tests for stability changes

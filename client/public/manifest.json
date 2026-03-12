@@ -1,7 +1,7 @@
 {
   "name": "Relate",
   "short_name": "Relate",
-  "description": "Relationship intelligence for real estate agents",
+  "description": "The Relationship Operating System for real estate agents",
   "display": "standalone",
   "orientation": "portrait-primary",
   "theme_color": "#6FAF8F",
